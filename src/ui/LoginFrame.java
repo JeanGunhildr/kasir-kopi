@@ -1,244 +1,296 @@
 package ui;
 
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
 import model.Admin;
 import model.Pengguna;
 import service.AuthService;
 import util.DatabaseUtil;
 
-import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-
 /**
- * Antarmuka Login Sistem Kasir Kedai Kopi (Pacbuck Coffee).
+ * Antarmuka Login Sistem Kasir Kedai Kopi (Pacbuck Coffee) versi JavaFX.
  * Titik masuk utama aplikasi (Main Entry Point) yang mengarahkan pengguna ke
  * AdminDashboard atau KasirDashboard sesuai hak akses (Role-Based Access Control).
- * Menggunakan ContrastButton solid untuk menjamin 100% keterbacaan pada Windows.
  */
-public class LoginFrame extends JFrame {
+public class LoginFrame extends Application {
 
-    // Palet Warna Fintech Dashboard
-    public static final Color COLOR_PRIMARY_DARK = new Color(11, 59, 44);   // Deep Emerald Forest (#0B3B2C)
-    public static final Color COLOR_SUCCESS = new Color(5, 150, 105);       // Mint Green (#059669)
-    public static final Color COLOR_SLATE_BTN = new Color(51, 65, 85);      // Slate Button (#334155)
-    public static final Color FINTECH_CANVAS = new Color(241, 245, 249);    // Canvas Slate 100 (#F1F5F9)
-    public static final Color FINTECH_BORDER = new Color(203, 213, 225);    // Border (#CBD5E1)
-    public static final Color COLOR_TEXT_MAIN = new Color(15, 23, 42);      // Slate 900 (#0F172A)
-    public static final Color COLOR_TEXT_MUTED = new Color(100, 116, 139);  // Slate 500 (#64748B)
+    // Palet Warna Fintech Dashboard (Hex & JavaFX Color)
+    public static final String HEX_PRIMARY_DARK = "#0B3B2C"; // Deep Emerald Forest
+    public static final String HEX_SUCCESS      = "#059669"; // Mint Green
+    public static final String HEX_SLATE_BTN    = "#334155"; // Slate Button
+    public static final String HEX_CANVAS       = "#F1F5F9"; // Canvas Slate 100
+    public static final String HEX_BORDER       = "#CBD5E1"; // Border
+    public static final String HEX_TEXT_MAIN    = "#0F172A"; // Slate 900
+    public static final String HEX_TEXT_MUTED   = "#64748B"; // Slate 500
+
+    public static final Color COLOR_PRIMARY_DARK = Color.web(HEX_PRIMARY_DARK);
+    public static final Color COLOR_SUCCESS      = Color.web(HEX_SUCCESS);
+    public static final Color COLOR_SLATE_BTN    = Color.web(HEX_SLATE_BTN);
+    public static final Color FINTECH_CANVAS     = Color.web(HEX_CANVAS);
+    public static final Color FINTECH_BORDER     = Color.web(HEX_BORDER);
+    public static final Color COLOR_TEXT_MAIN    = Color.web(HEX_TEXT_MAIN);
+    public static final Color COLOR_TEXT_MUTED   = Color.web(HEX_TEXT_MUTED);
 
     private final AuthService authService = AuthService.getInstance();
-    private JTextField txtUsername;
-    private JPasswordField txtPassword;
+    private TextField txtUsername;
+    private PasswordField txtPassword;
+    private Stage primaryStage;
 
-    public LoginFrame() {
-        super("Pacbuck Coffee - Otentikasi Masuk Sistem");
+    @Override
+    public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
         initUI();
     }
 
     private void initUI() {
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(460, 560);
-        setMinimumSize(new Dimension(420, 520));
-        setLocationRelativeTo(null);
-        getContentPane().setBackground(FINTECH_CANVAS);
-        setLayout(new GridBagLayout());
+        primaryStage.setTitle("Pacbuck Coffee - Otentikasi Masuk Sistem");
+        primaryStage.setMinWidth(420);
+        primaryStage.setMinHeight(520);
+
+        // Root Container (Menggantikan GridBagLayout untuk memusatkan Card)
+        StackPane root = new StackPane();
+        root.setStyle("-fx-background-color: " + HEX_CANVAS + ";");
 
         // Card Container Tengah
-        JPanel card = new JPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(Color.WHITE);
-        card.setBorder(new CompoundBorder(
-                new LineBorder(FINTECH_BORDER, 1, true),
-                new EmptyBorder(0, 0, 24, 0)
-        ));
-        card.setPreferredSize(new Dimension(380, 480));
+        VBox card = new VBox();
+        card.setPrefSize(380, 480);
+        card.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        card.setPadding(new Insets(0, 0, 24, 0));
+        card.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-border-color: " + HEX_BORDER + ";" +
+                        "-fx-border-width: 1;" +
+                        "-fx-border-radius: 10;" +
+                        "-fx-background-radius: 10;"
+        );
 
         // 1. Header Banner Atas (Deep Emerald)
-        JPanel header = new JPanel();
-        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
-        header.setBackground(COLOR_PRIMARY_DARK);
-        header.setBorder(new EmptyBorder(22, 20, 22, 20));
-        header.setAlignmentX(Component.CENTER_ALIGNMENT);
-        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 115));
+        VBox header = new VBox(4);
+        header.setAlignment(Pos.CENTER);
+        header.setPadding(new Insets(22, 20, 22, 20));
+        header.setPrefHeight(115);
+        header.setStyle(
+                "-fx-background-color: " + HEX_PRIMARY_DARK + ";" +
+                        "-fx-background-radius: 9 9 0 0;"
+        );
 
-        JLabel lblLogo = new JLabel("☕");
-        lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 30));
-        lblLogo.setForeground(Color.WHITE);
-        lblLogo.setAlignmentX(Component.CENTER_ALIGNMENT);
-        header.add(lblLogo);
+        Label lblLogo = new Label("☕");
+        lblLogo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 30));
+        lblLogo.setTextFill(Color.WHITE);
 
-        header.add(Box.createVerticalStrut(4));
+        Label lblBrand = new Label("Pacbuck Coffee POS");
+        lblBrand.setFont(Font.font("Segoe UI", FontWeight.BOLD, 19));
+        lblBrand.setTextFill(Color.WHITE);
 
-        JLabel lblBrand = new JLabel("Pacbuck Coffee POS");
-        lblBrand.setFont(new Font("Segoe UI", Font.BOLD, 19));
-        lblBrand.setForeground(Color.WHITE);
-        lblBrand.setAlignmentX(Component.CENTER_ALIGNMENT);
-        header.add(lblBrand);
+        Label lblSub = new Label("Fintech Point of Sale • Kelompok 4 PBO");
+        lblSub.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 12));
+        lblSub.setTextFill(Color.rgb(167, 243, 208));
 
-        JLabel lblSub = new JLabel("Fintech Point of Sale • Kelompok 4 PBO");
-        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblSub.setForeground(new Color(167, 243, 208));
-        lblSub.setAlignmentX(Component.CENTER_ALIGNMENT);
-        header.add(lblSub);
-
-        card.add(header);
-        card.add(Box.createVerticalStrut(20));
+        header.getChildren().addAll(lblLogo, lblBrand, lblSub);
+        card.getChildren().add(header);
 
         // 2. Form Input Panel
-        JPanel form = new JPanel();
-        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
-        form.setBackground(Color.WHITE);
-        form.setBorder(new EmptyBorder(0, 28, 0, 28));
-        form.setAlignmentX(Component.CENTER_ALIGNMENT);
+        VBox form = new VBox();
+        form.setPadding(new Insets(20, 28, 0, 28));
+        form.setAlignment(Pos.CENTER_LEFT);
 
-        JLabel lblUser = new JLabel("Username");
-        lblUser.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblUser.setForeground(COLOR_TEXT_MAIN);
-        lblUser.setAlignmentX(Component.LEFT_ALIGNMENT);
-        form.add(lblUser);
+        Label lblUser = new Label("Username");
+        lblUser.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+        lblUser.setTextFill(COLOR_TEXT_MAIN);
 
-        form.add(Box.createVerticalStrut(6));
+        txtUsername = new TextField();
+        txtUsername.setPromptText("Masukkan username...");
+        txtUsername.setFont(Font.font("Segoe UI", 13));
+        txtUsername.setPrefHeight(38);
+        applyInputStyle(txtUsername);
+        VBox.setMargin(txtUsername, new Insets(6, 0, 14, 0));
 
-        txtUsername = new JTextField();
-        txtUsername.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        txtUsername.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(8, 12, 8, 12)));
-        txtUsername.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        txtUsername.setAlignmentX(Component.LEFT_ALIGNMENT);
-        form.add(txtUsername);
+        Label lblPass = new Label("Password");
+        lblPass.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+        lblPass.setTextFill(COLOR_TEXT_MAIN);
 
-        form.add(Box.createVerticalStrut(14));
-
-        JLabel lblPass = new JLabel("Password");
-        lblPass.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblPass.setForeground(COLOR_TEXT_MAIN);
-        lblPass.setAlignmentX(Component.LEFT_ALIGNMENT);
-        form.add(lblPass);
-
-        form.add(Box.createVerticalStrut(6));
-
-        txtPassword = new JPasswordField();
-        txtPassword.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        txtPassword.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(8, 12, 8, 12)));
-        txtPassword.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        txtPassword.setAlignmentX(Component.LEFT_ALIGNMENT);
-        form.add(txtPassword);
-
-        form.add(Box.createVerticalStrut(20));
+        txtPassword = new PasswordField();
+        txtPassword.setPromptText("Masukkan password...");
+        txtPassword.setFont(Font.font("Segoe UI", 13));
+        txtPassword.setPrefHeight(38);
+        applyInputStyle(txtPassword);
+        VBox.setMargin(txtPassword, new Insets(6, 0, 20, 0));
 
         // Tombol Login (Solid Emerald Kontras Tinggi)
-        AdminDashboard.ContrastButton btnLogin = new AdminDashboard.ContrastButton("Masuk Sistem (Login)", COLOR_PRIMARY_DARK, Color.WHITE);
-        btnLogin.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnLogin.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
-        btnLogin.setAlignmentX(Component.LEFT_ALIGNMENT);
-        form.add(btnLogin);
-
-        form.add(Box.createVerticalStrut(16));
+        Button btnLogin = createContrastButton("Masuk Sistem (Login)", HEX_PRIMARY_DARK, "#FFFFFF", 14, 10);
+        btnLogin.setMaxWidth(Double.MAX_VALUE);
+        btnLogin.setPrefHeight(42);
+        VBox.setMargin(btnLogin, new Insets(0, 0, 16, 0));
 
         // Quick Fill Pills untuk kemudahan demo dosen / penguji
-        JLabel lblQuick = new JLabel("Login Cepat (Akun Demo):");
-        lblQuick.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblQuick.setForeground(COLOR_TEXT_MUTED);
-        lblQuick.setAlignmentX(Component.CENTER_ALIGNMENT);
-        form.add(lblQuick);
+        Label lblQuick = new Label("Login Cepat (Akun Demo):");
+        lblQuick.setFont(Font.font("Segoe UI", 11));
+        lblQuick.setTextFill(COLOR_TEXT_MUTED);
+        lblQuick.setMaxWidth(Double.MAX_VALUE);
+        lblQuick.setAlignment(Pos.CENTER);
+        VBox.setMargin(lblQuick, new Insets(0, 0, 6, 0));
 
-        form.add(Box.createVerticalStrut(6));
+        HBox pnlQuickBtns = new HBox(8);
+        pnlQuickBtns.setPrefHeight(32);
 
-        JPanel pnlQuickBtns = new JPanel(new GridLayout(1, 2, 8, 0));
-        pnlQuickBtns.setBackground(Color.WHITE);
-        pnlQuickBtns.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
-        pnlQuickBtns.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        AdminDashboard.ContrastButton btnDemoAdmin = new AdminDashboard.ContrastButton("Admin (admin)", COLOR_SLATE_BTN, Color.WHITE);
-        btnDemoAdmin.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        btnDemoAdmin.addActionListener(e -> {
+        Button btnDemoAdmin = createContrastButton("Admin (admin)", HEX_SLATE_BTN, "#FFFFFF", 11, 8);
+        btnDemoAdmin.setMaxWidth(Double.MAX_VALUE);
+        btnDemoAdmin.setPrefHeight(32);
+        HBox.setHgrow(btnDemoAdmin, Priority.ALWAYS);
+        btnDemoAdmin.setOnAction(e -> {
             txtUsername.setText("admin");
             txtPassword.setText("admin123");
-            txtPassword.requestFocusInWindow();
+            txtPassword.requestFocus();
         });
 
-        AdminDashboard.ContrastButton btnDemoKasir = new AdminDashboard.ContrastButton("Kasir (kasir1)", COLOR_SLATE_BTN, Color.WHITE);
-        btnDemoKasir.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        btnDemoKasir.addActionListener(e -> {
+        Button btnDemoKasir = createContrastButton("Kasir (kasir1)", HEX_SLATE_BTN, "#FFFFFF", 11, 8);
+        btnDemoKasir.setMaxWidth(Double.MAX_VALUE);
+        btnDemoKasir.setPrefHeight(32);
+        HBox.setHgrow(btnDemoKasir, Priority.ALWAYS);
+        btnDemoKasir.setOnAction(e -> {
             txtUsername.setText("kasir1");
             txtPassword.setText("kasir123");
-            txtPassword.requestFocusInWindow();
+            txtPassword.requestFocus();
         });
 
-        pnlQuickBtns.add(btnDemoAdmin);
-        pnlQuickBtns.add(btnDemoKasir);
-        form.add(pnlQuickBtns);
+        pnlQuickBtns.getChildren().addAll(btnDemoAdmin, btnDemoKasir);
+        form.getChildren().addAll(lblUser, txtUsername, lblPass, txtPassword, btnLogin, lblQuick, pnlQuickBtns);
+        card.getChildren().add(form);
 
-        card.add(form);
-        card.add(Box.createVerticalGlue());
+        // Spacer Fleksibel (Menggantikan Box.createVerticalGlue())
+        Region verticalGlue = new Region();
+        VBox.setVgrow(verticalGlue, Priority.ALWAYS);
+        card.getChildren().add(verticalGlue);
 
         // Status Footer
-        JLabel lblDbStatus = new JLabel("● Database: MySQL Connected (db_kasir_kopi)");
-        lblDbStatus.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblDbStatus.setForeground(COLOR_SUCCESS);
-        lblDbStatus.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.add(lblDbStatus);
+        Label lblDbStatus = new Label("● Database: MySQL Connected (db_kasir_kopi)");
+        lblDbStatus.setFont(Font.font("Segoe UI", 11));
+        lblDbStatus.setTextFill(COLOR_SUCCESS);
+        lblDbStatus.setMaxWidth(Double.MAX_VALUE);
+        lblDbStatus.setAlignment(Pos.CENTER);
+        card.getChildren().add(lblDbStatus);
 
-        add(card);
+        root.getChildren().add(card);
 
         // Action Events
-        btnLogin.addActionListener(e -> prosesLogin());
+        btnLogin.setOnAction(e -> prosesLogin());
 
-        KeyAdapter enterListener = new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    prosesLogin();
-                }
-            }
-        };
-        txtUsername.addKeyListener(enterListener);
-        txtPassword.addKeyListener(enterListener);
+        txtUsername.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) prosesLogin();
+        });
+        txtPassword.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) prosesLogin();
+        });
+
+        Scene scene = new Scene(root, 460, 560);
+        primaryStage.setScene(scene);
+        primaryStage.centerOnScreen();
+        primaryStage.show();
+    }
+
+    /**
+     * Meniru styling rounded & focus border FlatLaf pada TextField/PasswordField.
+     */
+    private void applyInputStyle(TextInputControl field) {
+        String normalStyle =
+                "-fx-background-color: white;" +
+                        "-fx-border-color: " + HEX_BORDER + ";" +
+                        "-fx-border-width: 1;" +
+                        "-fx-border-radius: 10;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-padding: 4 10 4 10;";
+
+        String focusedStyle =
+                "-fx-background-color: white;" +
+                        "-fx-border-color: " + HEX_SUCCESS + ";" +
+                        "-fx-border-width: 1.5;" +
+                        "-fx-border-radius: 10;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-padding: 4 10 4 10;";
+
+        field.setStyle(normalStyle);
+        field.focusedProperty().addListener((obs, wasFocused, isFocused) ->
+                field.setStyle(isFocused ? focusedStyle : normalStyle)
+        );
+    }
+
+    /**
+     * Pengganti AdminDashboard.ContrastButton dengan efek hover di JavaFX.
+     */
+    private Button createContrastButton(String text, String bgHex, String fgHex, int fontSize, int radius) {
+        Button btn = new Button(text);
+        btn.setFont(Font.font("Segoe UI", FontWeight.BOLD, fontSize));
+        String baseStyle =
+                "-fx-background-color: " + bgHex + ";" +
+                        "-fx-text-fill: " + fgHex + ";" +
+                        "-fx-background-radius: " + radius + ";" +
+                        "-fx-cursor: hand;";
+        String hoverStyle = baseStyle + "-fx-opacity: 0.9;";
+
+        btn.setStyle(baseStyle);
+        btn.setOnMouseEntered(e -> btn.setStyle(hoverStyle));
+        btn.setOnMouseExited(e -> btn.setStyle(baseStyle));
+        return btn;
     }
 
     private void prosesLogin() {
         String username = txtUsername.getText().trim();
-        String password = new String(txtPassword.getPassword()).trim();
+        String password = txtPassword.getText().trim();
 
         if (username.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Silakan masukkan username dan password!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            showAlert(Alert.AlertType.WARNING, "Peringatan", "Silakan masukkan username dan password!");
             return;
         }
 
         try {
             Pengguna user = authService.login(username, password);
             if (user == null) {
-                JOptionPane.showMessageDialog(this, "Username atau password salah, atau akun nonaktif!", "Gagal Masuk", JOptionPane.ERROR_MESSAGE);
+                showAlert(Alert.AlertType.ERROR, "Gagal Masuk", "Username atau password salah, atau akun nonaktif!");
                 return;
             }
 
-            // Role-based routing (Admin atau Kasir)
+            // Role-based routing (Asumsi AdminDashboard & KasirDashboard juga berbasis JavaFX Stage)
+            Stage dashboardStage = new Stage();
             if (user instanceof Admin || "ADMIN".equalsIgnoreCase(user.getRole())) {
-                new AdminDashboard(user).setVisible(true);
+                new AdminDashboard(user).start(dashboardStage);
             } else {
-                new KasirDashboard(user).setVisible(true);
+                new KasirDashboard(user).start(dashboardStage);
             }
-            dispose();
+            primaryStage.close();
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Gagal terhubung ke database: " + ex.getMessage() + "\nPastikan MySQL di Laragon / XAMPP sudah berjalan di port 3306.", "Koneksi Database Error", JOptionPane.ERROR_MESSAGE);
+            showAlert(
+                    Alert.AlertType.ERROR,
+                    "Koneksi Database Error",
+                    "Gagal terhubung ke database: " + ex.getMessage() +
+                            "\nPastikan MySQL di Laragon / XAMPP sudah berjalan di port 3306."
+            );
         }
     }
 
-    public static void main(String[] args) {
-        // Set Look and Feel Modern Sistem
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
+    private void showAlert(Alert.AlertType type, String title, String content) {
+        Alert alert = new Alert(type);
+        alert.initOwner(primaryStage);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
 
+    public static void main(String[] args) {
         // Inisialisasi Database dan Data Default Otomatis
         DatabaseUtil.initDatabase();
 
-        SwingUtilities.invokeLater(() -> {
-            new LoginFrame().setVisible(true);
-        });
+        // Menjalankan siklus hidup JavaFX
+        launch(args);
     }
 }

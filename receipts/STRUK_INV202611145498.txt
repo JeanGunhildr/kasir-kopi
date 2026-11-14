@@ -1,0 +1,17 @@
+========================================
+            PACBUCK COFFEE              
+   Kedai Kopi Nusantara - PBO UNSOED    
+========================================
+No Faktur : INV202611145498
+Kasir     : Admin: Admin Kedai Kopi
+----------------------------------------
+Croissant Butter   20x    18000   360000
+----------------------------------------
+Subtotal             : Rp 360000
+PPN (10%)            : Rp 36000
+TOTAL                : Rp 396000
+Bayar                : Rp 396000
+Kembalian            : Rp 0
+========================================
+    TERIMA KASIH ATAS KUNJUNGAN ANDA    
+========================================
