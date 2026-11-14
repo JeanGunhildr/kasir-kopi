@@ -1,0 +1,23 @@
+# Compiled class files
+bin/
+*.class
+
+# Generated receipts
+receipts/*.pdf
+receipts/*.txt
+
+# IDE / Editor
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Izinkan native library JavaFX (.dll) di dalam folder lib/
+!lib/**/bin/
+!lib/**/*.dll
