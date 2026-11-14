@@ -1,18 +1,19 @@
 package ui;
-import javafx.geometry.Rectangle2D;
-import javafx.stage.Screen;
+
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import model.DetailTransaksi;
 import model.Menu;
@@ -77,6 +78,8 @@ public class KasirDashboard {
     private final TransaksiService transaksiService = new TransaksiService();
     private final Pengguna currentUser;
     private Stage stage;
+    private Runnable refreshPosMenuHook;
+    private Runnable refreshRiwayatHook;
 
     public static String formatRupiah(double nilai) {
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.forLanguageTag("id-ID"));
@@ -121,7 +124,10 @@ public class KasirDashboard {
 
         Region panelPOS = buatPanelPOS();
         Region panelRiwayat = buatPanelRiwayat();
+        panelPOS.setVisible(true);
+        panelPOS.setManaged(true);
         panelRiwayat.setVisible(false);
+        panelRiwayat.setManaged(false);
 
         contentArea.getChildren().addAll(panelPOS, panelRiwayat);
 
@@ -188,7 +194,11 @@ public class KasirDashboard {
         btnLogout.setOnAction(e -> {
             if (showConfirm("Konfirmasi Logout", "Keluar dari sesi kasir?")) {
                 AuthService.getInstance().logout();
-                new LoginFrame().start(new Stage());
+                try {
+                    new LoginFrame().start(new Stage());
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
                 stage.close();
             }
         });
@@ -228,16 +238,22 @@ public class KasirDashboard {
 
         btnPos.setOnAction(e -> {
             panelPOS.setVisible(true);
+            panelPOS.setManaged(true);
             panelRiwayat.setVisible(false);
+            panelRiwayat.setManaged(false);
             btnPos.setColors(HEX_PRIMARY_DARK, "#FFFFFF");
             btnHist.setColors(HEX_CANVAS, HEX_TEXT_MAIN);
+            if (refreshPosMenuHook != null) refreshPosMenuHook.run();
         });
 
         btnHist.setOnAction(e -> {
             panelPOS.setVisible(false);
+            panelPOS.setManaged(false);
             panelRiwayat.setVisible(true);
+            panelRiwayat.setManaged(true);
             btnHist.setColors(HEX_PRIMARY_DARK, "#FFFFFF");
             btnPos.setColors(HEX_CANVAS, HEX_TEXT_MAIN);
+            if (refreshRiwayatHook != null) refreshRiwayatHook.run();
         });
 
         sidebar.getChildren().addAll(btnPos, btnHist);
@@ -367,6 +383,7 @@ public class KasirDashboard {
             }
         };
         loadMenuData.run();
+        this.refreshPosMenuHook = loadMenuData;
 
         AdminDashboard.ContrastButton[] filterTabs = {tabAll, tabKopi, tabNonKopi, tabMakanan};
         String[] filterNames = {"Semua", "Kopi", "Non-Kopi", "Makanan"};
@@ -828,6 +845,7 @@ public class KasirDashboard {
             }
         };
         loadTrx.run();
+        this.refreshRiwayatHook = loadTrx;
 
         // Event Klik Baris Transaksi -> Menampilkan Detail Barang Terjual
         tblTrx.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, t) -> {

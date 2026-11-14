@@ -1,6 +1,5 @@
 package ui;
-import javafx.geometry.Rectangle2D;
-import javafx.stage.Screen;
+
 import javafx.application.Application;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -9,6 +8,7 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -16,6 +16,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Modality;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import model.DetailTransaksi;
 import model.Kasir;
@@ -86,9 +87,9 @@ public class AdminDashboard extends Application {
     private final LaporanService laporanService = new LaporanService();
     private final TransaksiService transaksiService = new TransaksiService();
     private final Pengguna currentUser;
-    private Stage stage;
 
     private Stage primaryStage;
+    private Runnable refreshPosMenuHook;
     private Runnable refreshLaporanHook;
     private Runnable refreshRiwayatHook;
 
@@ -195,17 +196,17 @@ public class AdminDashboard extends Application {
     }
 
     private void initUI() {
-        if (this.stage == null) {
-            this.stage = new Stage();
+        if (this.primaryStage == null) {
+            this.primaryStage = new Stage();
         }
 
         Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
         double maxW = visualBounds.getWidth();
         double maxH = visualBounds.getHeight();
 
-        stage.setTitle("Pacbuck Coffee - Panel Administrator (" + currentUser.getNama() + ")");
-        stage.setMinWidth(Math.min(960, maxW));
-        stage.setMinHeight(Math.min(600, maxH));
+        primaryStage.setTitle("Pacbuck Coffee - Panel Administrator (" + currentUser.getNama() + ")");
+        primaryStage.setMinWidth(Math.min(960, maxW));
+        primaryStage.setMinHeight(Math.min(600, maxH));
 
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: " + HEX_CANVAS + ";");
@@ -228,6 +229,7 @@ public class AdminDashboard extends Application {
         Region[] panels = {panelPOS, panelMenu, panelKasir, panelPromo, panelLaporan, panelRiwayat};
         for (int i = 0; i < panels.length; i++) {
             panels[i].setVisible(i == 0);
+            panels[i].setManaged(i == 0);
             contentArea.getChildren().add(panels[i]);
         }
 
@@ -238,11 +240,11 @@ public class AdminDashboard extends Application {
         double initH = Math.min(760, maxH);
 
         Scene scene = new Scene(root, initW, initH);
-        stage.setScene(scene);
-        stage.setX(visualBounds.getMinX() + (maxW - initW) / 2);
-        stage.setY(visualBounds.getMinY() + (maxH - initH) / 2);
-        stage.setMaximized(true); // Buka penuh pas dengan batas fisik layar & taskbar
-        stage.show();
+        primaryStage.setScene(scene);
+        primaryStage.setX(visualBounds.getMinX() + (maxW - initW) / 2);
+        primaryStage.setY(visualBounds.getMinY() + (maxH - initH) / 2);
+        primaryStage.setMaximized(true);
+        primaryStage.show();
     }
 
     private HBox buatTopBar() {
@@ -353,6 +355,7 @@ public class AdminDashboard extends Application {
                     panels[j].setManaged(active);
                     buttons[j].setColors(active ? HEX_PRIMARY_DARK : HEX_CANVAS, active ? "#FFFFFF" : HEX_TEXT_MAIN);
                 }
+                if (idx == 0 && refreshPosMenuHook != null) refreshPosMenuHook.run();
                 if (idx == 4 && refreshLaporanHook != null) refreshLaporanHook.run();
                 if (idx == 5 && refreshRiwayatHook != null) refreshRiwayatHook.run();
             });
@@ -485,6 +488,7 @@ public class AdminDashboard extends Application {
             }
         };
         loadMenuData.run();
+        this.refreshPosMenuHook = loadMenuData;
 
         ContrastButton[] filterTabs = {tabAll, tabKopi, tabNonKopi, tabMakanan};
         String[] filterNames = {"Semua", "Kopi", "Non-Kopi", "Makanan"};
