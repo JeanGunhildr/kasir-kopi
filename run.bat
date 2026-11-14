@@ -1,15 +1,15 @@
 @echo off
 echo ========================================================
 echo   MENJALANKAN APLIKASI KASIR KEDAI KOPI (PACBUCK POS)
-echo   Informatika UNSOED - Kelompok 4
+echo   GUI Modern JavaFX - Informatika UNSOED Kelompok 4
 echo ========================================================
 
-if not exist bin\ui\LoginFrame.class (
-    echo Mengompilasi program terlebih dahulu...
-    javac -encoding UTF-8 -cp "lib/*" -d bin src/model/*.java src/util/*.java src/repository/*.java src/service/*.java src/ui/*.java
+if not exist bin\ui\AppLauncher.class (
+    echo Mengompilasi program JavaFX terlebih dahulu...
+    call compile.bat
 )
 
 if not exist receipts mkdir receipts
 
-echo Memulai aplikasi Kasir Kopi...
-start javaw -cp "bin;lib/*" ui.LoginFrame
+echo Memulai aplikasi Kasir Kopi Modern (JavaFX)...
+start javaw --module-path "lib/javafx-sdk/lib" --add-modules javafx.controls,javafx.fxml -cp "bin;lib/*;lib/javafx-sdk/lib/*" ui.AppLauncher
