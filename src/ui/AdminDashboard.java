@@ -1,6 +1,22 @@
 package ui;
-
-import model.Admin;
+import javafx.geometry.Rectangle2D;
+import javafx.stage.Screen;
+import javafx.application.Application;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import model.DetailTransaksi;
 import model.Kasir;
 import model.Menu;
@@ -14,16 +30,6 @@ import service.PromoService;
 import service.TransaksiService;
 import util.PDFUtil;
 
-import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -31,35 +37,48 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
- * Dashboard Antarmuka Administrator (Admin).
+ * Dashboard Antarmuka Administrator (Admin) versi JavaFX.
  * Menyediakan transaksi kasir terintegrasi (POS), pengelolaan Menu & Stok (FR-01, FR-03),
  * Akun Kasir (FR-02), Kode Promo & Diskon (FR-07), Laporan Penjualan (FR-04),
  * dan Riwayat Transaksi lengkap dengan Rincian Barang Terjual (Master-Detail).
- * Didesain dengan estetika Pacbuck Fintech Dashboard dan tombol kustom berkontras tinggi.
  */
-public class AdminDashboard extends JFrame {
+public class AdminDashboard extends Application {
 
-    // Palet Warna Fintech Dashboard (High Contrast Solid Colors)
-    public static final Color COLOR_PRIMARY_DARK = new Color(11, 59, 44);   // Deep Emerald Forest (#0B3B2C)
-    public static final Color COLOR_SUCCESS = new Color(5, 150, 105);       // Solid Mint Green (#059669)
-    public static final Color COLOR_SLATE_BTN = new Color(51, 65, 85);      // Slate Button (#334155)
-    public static final Color COLOR_DANGER = new Color(220, 38, 38);        // Solid Crimson Red (#DC2626)
-    public static final Color COLOR_AMBER = new Color(217, 119, 6);         // Amber Warning (#D97706)
+    // Palet Warna Fintech Dashboard (Hex & JavaFX Color)
+    public static final String HEX_PRIMARY_DARK = "#0B3B2C"; // Deep Emerald Forest
+    public static final String HEX_SUCCESS      = "#059669"; // Solid Mint Green
+    public static final String HEX_SLATE_BTN    = "#334155"; // Slate Button
+    public static final String HEX_DANGER       = "#DC2626"; // Solid Crimson Red
+    public static final String HEX_AMBER        = "#D97706"; // Amber Warning
 
-    public static final Color FINTECH_CANVAS = new Color(241, 245, 249);    // Canvas Slate 100 (#F1F5F9)
-    public static final Color FINTECH_CARD = Color.WHITE;                   // White Card Container
-    public static final Color FINTECH_BORDER = new Color(203, 213, 225);    // Border Slate 300 (#CBD5E1)
+    public static final String HEX_CANVAS       = "#F1F5F9"; // Canvas Slate 100
+    public static final String HEX_CARD         = "#FFFFFF"; // White Card Container
+    public static final String HEX_BORDER       = "#CBD5E1"; // Border Slate 300
 
-    public static final Color COLOR_TEXT_MAIN = new Color(15, 23, 42);      // Dark Slate (#0F172A)
-    public static final Color COLOR_TEXT_MUTED = new Color(100, 116, 139);  // Muted Slate (#64748B)
+    public static final String HEX_TEXT_MAIN    = "#0F172A"; // Dark Slate
+    public static final String HEX_TEXT_MUTED   = "#64748B"; // Muted Slate
 
-    public static final Font FONT_LARGE_TITLE = new Font("Segoe UI", Font.BOLD, 20);
-    public static final Font FONT_TITLE = new Font("Segoe UI", Font.BOLD, 15);
-    public static final Font FONT_REGULAR = new Font("Segoe UI", Font.PLAIN, 13);
-    public static final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 13);
-    public static final Font FONT_HERO_NUM = new Font("Segoe UI", Font.BOLD, 24);
+    public static final Color COLOR_PRIMARY_DARK = Color.web(HEX_PRIMARY_DARK);
+    public static final Color COLOR_SUCCESS      = Color.web(HEX_SUCCESS);
+    public static final Color COLOR_SLATE_BTN    = Color.web(HEX_SLATE_BTN);
+    public static final Color COLOR_DANGER       = Color.web(HEX_DANGER);
+    public static final Color COLOR_AMBER        = Color.web(HEX_AMBER);
+
+    public static final Color FINTECH_CANVAS     = Color.web(HEX_CANVAS);
+    public static final Color FINTECH_CARD       = Color.web(HEX_CARD);
+    public static final Color FINTECH_BORDER     = Color.web(HEX_BORDER);
+
+    public static final Color COLOR_TEXT_MAIN    = Color.web(HEX_TEXT_MAIN);
+    public static final Color COLOR_TEXT_MUTED   = Color.web(HEX_TEXT_MUTED);
+
+    public static final Font FONT_LARGE_TITLE = Font.font("Segoe UI", FontWeight.BOLD, 20);
+    public static final Font FONT_TITLE       = Font.font("Segoe UI", FontWeight.BOLD, 15);
+    public static final Font FONT_REGULAR     = Font.font("Segoe UI", FontWeight.NORMAL, 13);
+    public static final Font FONT_BOLD        = Font.font("Segoe UI", FontWeight.BOLD, 13);
+    public static final Font FONT_HERO_NUM    = Font.font("Segoe UI", FontWeight.BOLD, 24);
 
     private final MenuService menuService = new MenuService();
     private final AuthService authService = AuthService.getInstance();
@@ -67,200 +86,255 @@ public class AdminDashboard extends JFrame {
     private final LaporanService laporanService = new LaporanService();
     private final TransaksiService transaksiService = new TransaksiService();
     private final Pengguna currentUser;
+    private Stage stage;
+
+    private Stage primaryStage;
+    private Runnable refreshLaporanHook;
+    private Runnable refreshRiwayatHook;
 
     public static String formatRupiah(double nilai) {
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(new Locale("id", "ID"));
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.forLanguageTag("id-ID"));
         symbols.setGroupingSeparator('.');
         symbols.setDecimalSeparator(',');
         DecimalFormat df = new DecimalFormat("Rp #,##0", symbols);
         return df.format(nilai);
     }
 
+    public static String toHexString(Color color) {
+        int r = (int) Math.round(color.getRed() * 255);
+        int g = (int) Math.round(color.getGreen() * 255);
+        int b = (int) Math.round(color.getBlue() * 255);
+        return String.format("#%02X%02X%02X", r, g, b);
+    }
+
     /**
-     * Komponen Tombol Kustom Berkontras Tinggi (ContrastButton).
-     * Mencegah bug Windows Look-and-Feel yang menimpa warna latar belakang menjadi putih
-     * dan memastikan teks selalu terbaca jelas (100% High Contrast).
+     * Komponen Tombol Kustom Berkontras Tinggi (ContrastButton) versi JavaFX.
      */
-    public static class ContrastButton extends JButton {
-        private Color normalBg;
-        private Color hoverBg;
-        private Color pressedBg;
-        private Color normalFg;
-        private int cornerRadius = 6;
+    public static class ContrastButton extends Button {
+        private String normalBgHex;
+        private String hoverBgHex;
+        private String pressedBgHex;
+        private String normalFgHex;
+        private int cornerRadius = 8;
+        private String paddingCss = "8 14 8 14";
 
         public ContrastButton(String text, Color bg, Color fg) {
-            super(text);
-            this.normalBg = bg;
-            this.normalFg = fg;
-            this.hoverBg = adjustBrightness(bg, 1.18f);
-            this.pressedBg = adjustBrightness(bg, 0.82f);
-
-            setOpaque(false);
-            setContentAreaFilled(false);
-            setFocusPainted(false);
-            setBorderPainted(false);
-            setFont(new Font("Segoe UI", Font.BOLD, 12));
-            setForeground(fg);
-            setCursor(new Cursor(Cursor.HAND_CURSOR));
-            setBorder(new EmptyBorder(8, 14, 8, 14));
+            this(text, toHexString(bg), toHexString(fg));
         }
 
-        private static Color adjustBrightness(Color c, float factor) {
-            int r = Math.min(255, Math.max(0, (int) (c.getRed() * factor)));
-            int g = Math.min(255, Math.max(0, (int) (c.getGreen() * factor)));
-            int b = Math.min(255, Math.max(0, (int) (c.getBlue() * factor)));
-            return new Color(r, g, b);
+        public ContrastButton(String text, String bgHex, String fgHex) {
+            super(text);
+            setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+            setColors(bgHex, fgHex);
+
+            setOnMouseEntered(e -> {
+                if (!isDisabled()) applyStateStyle(hoverBgHex, normalFgHex);
+            });
+            setOnMouseExited(e -> {
+                if (!isDisabled()) applyStateStyle(normalBgHex, normalFgHex);
+            });
+            setOnMousePressed(e -> {
+                if (!isDisabled()) applyStateStyle(pressedBgHex, normalFgHex);
+            });
+            setOnMouseReleased(e -> {
+                if (!isDisabled()) applyStateStyle(isHover() ? hoverBgHex : normalBgHex, normalFgHex);
+            });
+            disabledProperty().addListener((obs, oldVal, isDis) -> {
+                if (isDis) {
+                    applyStateStyle("#CBD5E1", "#94A3B8");
+                } else {
+                    applyStateStyle(normalBgHex, normalFgHex);
+                }
+            });
+        }
+
+        private static String adjustBrightnessHex(String hex, float factor) {
+            Color c = Color.web(hex);
+            int r = Math.min(255, Math.max(0, (int) (c.getRed() * 255 * factor)));
+            int g = Math.min(255, Math.max(0, (int) (c.getGreen() * 255 * factor)));
+            int b = Math.min(255, Math.max(0, (int) (c.getBlue() * 255 * factor)));
+            return String.format("#%02X%02X%02X", r, g, b);
         }
 
         public void setColors(Color bg, Color fg) {
-            this.normalBg = bg;
-            this.normalFg = fg;
-            this.hoverBg = adjustBrightness(bg, 1.18f);
-            this.pressedBg = adjustBrightness(bg, 0.82f);
-            setForeground(fg);
-            repaint();
+            setColors(toHexString(bg), toHexString(fg));
         }
 
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        public void setColors(String bgHex, String fgHex) {
+            this.normalBgHex = bgHex;
+            this.normalFgHex = fgHex;
+            this.hoverBgHex = adjustBrightnessHex(bgHex, 1.18f);
+            this.pressedBgHex = adjustBrightnessHex(bgHex, 0.82f);
+            applyStateStyle(normalBgHex, normalFgHex);
+        }
 
-            Color currentBg;
-            if (!isEnabled()) {
-                currentBg = new Color(203, 213, 225);
-            } else if (getModel().isPressed()) {
-                currentBg = pressedBg;
-            } else if (getModel().isRollover()) {
-                currentBg = hoverBg;
-            } else {
-                currentBg = normalBg;
-            }
+        public void setPaddingCss(String paddingCss) {
+            this.paddingCss = paddingCss;
+            applyStateStyle(normalBgHex, normalFgHex);
+        }
 
-            g2.setColor(currentBg);
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), cornerRadius, cornerRadius);
-
-            FontMetrics fm = g2.getFontMetrics(getFont());
-            Rectangle2D bounds = fm.getStringBounds(getText(), g2);
-            int textX = (getWidth() - (int) bounds.getWidth()) / 2;
-            int textY = (getHeight() - (int) bounds.getHeight()) / 2 + fm.getAscent() - 1;
-
-            Color currentFg = isEnabled() ? normalFg : new Color(148, 163, 184);
-            g2.setFont(getFont());
-            g2.setColor(currentFg);
-            g2.drawString(getText(), textX, textY);
-
-            g2.dispose();
+        private void applyStateStyle(String bg, String fg) {
+            setStyle(
+                    "-fx-background-color: " + bg + ";" +
+                            "-fx-text-fill: " + fg + ";" +
+                            "-fx-background-radius: " + cornerRadius + ";" +
+                            "-fx-padding: " + paddingCss + ";" +
+                            "-fx-cursor: hand;"
+            );
         }
     }
 
     public AdminDashboard(Pengguna user) {
-        super("Pacbuck Coffee - Panel Administrator (" + user.getNama() + ")");
         this.currentUser = user;
+    }
+
+    @Override
+    public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
         initUI();
     }
 
     private void initUI() {
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1320, 840);
-        setMinimumSize(new Dimension(1100, 720));
-        setLocationRelativeTo(null);
-        getContentPane().setBackground(FINTECH_CANVAS);
-        setLayout(new BorderLayout());
+        if (this.stage == null) {
+            this.stage = new Stage();
+        }
+
+        Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
+        double maxW = visualBounds.getWidth();
+        double maxH = visualBounds.getHeight();
+
+        stage.setTitle("Pacbuck Coffee - Panel Administrator (" + currentUser.getNama() + ")");
+        stage.setMinWidth(Math.min(960, maxW));
+        stage.setMinHeight(Math.min(600, maxH));
+
+        BorderPane root = new BorderPane();
+        root.setStyle("-fx-background-color: " + HEX_CANVAS + ";");
 
         // Header Top Bar
-        add(buatTopBar(), BorderLayout.NORTH);
+        root.setTop(buatTopBar());
 
-        // Content Area CardLayout
-        CardLayout cardLayout = new CardLayout();
-        JPanel contentArea = new JPanel(cardLayout);
-        contentArea.setBackground(FINTECH_CANVAS);
-        contentArea.setBorder(new EmptyBorder(12, 12, 12, 12));
+        // Content Area
+        StackPane contentArea = new StackPane();
+        contentArea.setPadding(new Insets(12));
+        contentArea.setStyle("-fx-background-color: " + HEX_CANVAS + ";");
 
-        // Tab-tab sistem (Admin juga memiliki akses Transaksi Kasir POS!)
-        contentArea.add(buatPanelPOS(), "POS");
-        contentArea.add(buatPanelMenu(), "MENU");
-        contentArea.add(buatPanelKasir(), "KASIR");
-        contentArea.add(buatPanelPromo(), "PROMO");
-        contentArea.add(buatPanelLaporan(), "LAPORAN");
-        contentArea.add(buatPanelRiwayat(), "RIWAYAT");
+        Region panelPOS = buatPanelPOS();
+        Region panelMenu = buatPanelMenu();
+        Region panelKasir = buatPanelKasir();
+        Region panelPromo = buatPanelPromo();
+        Region panelLaporan = buatPanelLaporan();
+        Region panelRiwayat = buatPanelRiwayat();
 
-        add(buatSidebar(cardLayout, contentArea), BorderLayout.WEST);
-        add(contentArea, BorderLayout.CENTER);
+        Region[] panels = {panelPOS, panelMenu, panelKasir, panelPromo, panelLaporan, panelRiwayat};
+        for (int i = 0; i < panels.length; i++) {
+            panels[i].setVisible(i == 0);
+            contentArea.getChildren().add(panels[i]);
+        }
+
+        root.setLeft(buatSidebar(panels));
+        root.setCenter(contentArea);
+
+        double initW = Math.min(1280, maxW);
+        double initH = Math.min(760, maxH);
+
+        Scene scene = new Scene(root, initW, initH);
+        stage.setScene(scene);
+        stage.setX(visualBounds.getMinX() + (maxW - initW) / 2);
+        stage.setY(visualBounds.getMinY() + (maxH - initH) / 2);
+        stage.setMaximized(true); // Buka penuh pas dengan batas fisik layar & taskbar
+        stage.show();
     }
 
-    private JPanel buatTopBar() {
-        JPanel bar = new JPanel(new BorderLayout());
-        bar.setBackground(Color.WHITE);
-        bar.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1), new EmptyBorder(12, 20, 12, 20)));
+    private HBox buatTopBar() {
+        HBox bar = new HBox();
+        bar.setAlignment(Pos.CENTER_LEFT);
+        bar.setPadding(new Insets(12, 20, 12, 20));
+        bar.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-border-color: " + HEX_BORDER + ";" +
+                        "-fx-border-width: 0 0 1 0;"
+        );
 
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        left.setBackground(Color.WHITE);
+        HBox left = new HBox(10);
+        left.setAlignment(Pos.CENTER_LEFT);
 
-        JLabel lblTitle = new JLabel("Pacbuck Coffee Management System");
+        Label lblTitle = new Label("Pacbuck Coffee Management System");
         lblTitle.setFont(FONT_LARGE_TITLE);
-        lblTitle.setForeground(COLOR_PRIMARY_DARK);
-        left.add(lblTitle);
+        lblTitle.setTextFill(COLOR_PRIMARY_DARK);
 
-        JLabel lblSubtitle = new JLabel("|  Portal Eksekutif & Administrator Kedai Kopi");
+        Label lblSubtitle = new Label("|  Portal Eksekutif & Administrator Kedai Kopi");
         lblSubtitle.setFont(FONT_REGULAR);
-        lblSubtitle.setForeground(COLOR_TEXT_MUTED);
-        left.add(lblSubtitle);
+        lblSubtitle.setTextFill(COLOR_TEXT_MUTED);
 
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
-        right.setBackground(Color.WHITE);
+        left.getChildren().addAll(lblTitle, lblSubtitle);
 
-        // User Profile Badge
-        JPanel userBadge = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 4));
-        userBadge.setBackground(new Color(241, 245, 249));
-        userBadge.setBorder(new LineBorder(FINTECH_BORDER, 1, true));
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        JLabel lblUser = new JLabel("Admin: " + currentUser.getNama());
+        HBox right = new HBox(12);
+        right.setAlignment(Pos.CENTER_RIGHT);
+
+        // User Profile Badge (Pill Style)
+        HBox userBadge = new HBox();
+        userBadge.setAlignment(Pos.CENTER);
+        userBadge.setPadding(new Insets(6, 14, 6, 14));
+        userBadge.setStyle(
+                "-fx-background-color: " + HEX_CANVAS + ";" +
+                        "-fx-border-color: " + HEX_BORDER + ";" +
+                        "-fx-border-width: 1;" +
+                        "-fx-border-radius: 999;" +
+                        "-fx-background-radius: 999;"
+        );
+
+        Label lblUser = new Label("Admin: " + currentUser.getNama());
         lblUser.setFont(FONT_BOLD);
-        lblUser.setForeground(COLOR_TEXT_MAIN);
-        userBadge.add(lblUser);
-        right.add(userBadge);
+        lblUser.setTextFill(COLOR_TEXT_MAIN);
+        userBadge.getChildren().add(lblUser);
 
-        ContrastButton btnLogout = new ContrastButton("Logout", COLOR_DANGER, Color.WHITE);
-        btnLogout.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(this, "Apakah Anda yakin ingin logout dari sistem?", "Konfirmasi Logout", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
+        ContrastButton btnLogout = new ContrastButton("Logout", HEX_DANGER, "#FFFFFF");
+        btnLogout.setOnAction(e -> {
+            if (showConfirm("Konfirmasi Logout", "Apakah Anda yakin ingin logout dari sistem?")) {
                 authService.logout();
-                new LoginFrame().setVisible(true);
-                dispose();
+                try {
+                    new LoginFrame().start(new Stage());
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                primaryStage.close();
             }
         });
-        right.add(btnLogout);
 
-        bar.add(left, BorderLayout.WEST);
-        bar.add(right, BorderLayout.EAST);
+        right.getChildren().addAll(userBadge, btnLogout);
+        bar.getChildren().addAll(left, spacer, right);
         return bar;
     }
 
-    private JPanel buatSidebar(CardLayout cardLayout, JPanel contentArea) {
-        JPanel sidebar = new JPanel();
-        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(Color.WHITE);
-        sidebar.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1), new EmptyBorder(18, 14, 18, 14)));
-        sidebar.setPreferredSize(new Dimension(240, 0));
+    private VBox buatSidebar(Region[] panels) {
+        VBox sidebar = new VBox(6);
+        sidebar.setPrefWidth(240);
+        sidebar.setPadding(new Insets(18, 14, 18, 14));
+        sidebar.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-border-color: " + HEX_BORDER + ";" +
+                        "-fx-border-width: 0 1 0 0;"
+        );
 
         // Brand Logo
-        JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        brand.setBackground(Color.WHITE);
-        JLabel lblLogo = new JLabel("☕");
-        lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        brand.add(lblLogo);
+        HBox brand = new HBox(8);
+        brand.setAlignment(Pos.CENTER_LEFT);
+        brand.setPadding(new Insets(0, 0, 14, 4));
 
-        JLabel lblBrandName = new JLabel("Pacbuck Admin");
-        lblBrandName.setFont(new Font("Segoe UI", Font.BOLD, 17));
-        lblBrandName.setForeground(COLOR_PRIMARY_DARK);
-        brand.add(lblBrandName);
+        Label lblLogo = new Label("☕");
+        lblLogo.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
 
-        sidebar.add(brand);
-        sidebar.add(Box.createVerticalStrut(20));
+        Label lblBrandName = new Label("Pacbuck Admin");
+        lblBrandName.setFont(Font.font("Segoe UI", FontWeight.BOLD, 17));
+        lblBrandName.setTextFill(COLOR_PRIMARY_DARK);
 
-        // Tombol Navigasi Sidebar (Kontras Tinggi)
+        brand.getChildren().addAll(lblLogo, lblBrandName);
+        sidebar.getChildren().add(brand);
+
+        // Tombol Navigasi Sidebar
         ContrastButton btnPos = createSidebarButton("Transaksi Kasir (POS)", true);
         ContrastButton btnMenu = createSidebarButton("Kelola Menu & Stok", false);
         ContrastButton btnKasir = createSidebarButton("Kelola Akun Kasir", false);
@@ -269,129 +343,141 @@ public class AdminDashboard extends JFrame {
         ContrastButton btnRiwayat = createSidebarButton("Riwayat Transaksi", false);
 
         ContrastButton[] buttons = {btnPos, btnMenu, btnKasir, btnPromo, btnLaporan, btnRiwayat};
-        String[] keys = {"POS", "MENU", "KASIR", "PROMO", "LAPORAN", "RIWAYAT"};
 
         for (int i = 0; i < buttons.length; i++) {
             final int idx = i;
-            buttons[i].addActionListener(e -> {
-                cardLayout.show(contentArea, keys[idx]);
-                for (ContrastButton b : buttons) {
-                    b.setColors(new Color(241, 245, 249), COLOR_TEXT_MAIN);
+            buttons[i].setOnAction(e -> {
+                for (int j = 0; j < panels.length; j++) {
+                    boolean active = (j == idx);
+                    panels[j].setVisible(active);
+                    panels[j].setManaged(active);
+                    buttons[j].setColors(active ? HEX_PRIMARY_DARK : HEX_CANVAS, active ? "#FFFFFF" : HEX_TEXT_MAIN);
                 }
-                buttons[idx].setColors(COLOR_PRIMARY_DARK, Color.WHITE);
+                if (idx == 4 && refreshLaporanHook != null) refreshLaporanHook.run();
+                if (idx == 5 && refreshRiwayatHook != null) refreshRiwayatHook.run();
             });
-            sidebar.add(buttons[i]);
-            sidebar.add(Box.createVerticalStrut(6));
+            sidebar.getChildren().add(buttons[i]);
         }
 
-        sidebar.add(Box.createVerticalGlue());
+        Region verticalGlue = new Region();
+        VBox.setVgrow(verticalGlue, Priority.ALWAYS);
+        sidebar.getChildren().add(verticalGlue);
 
         // Mini Card Info
-        JPanel miniCard = new JPanel();
-        miniCard.setLayout(new BoxLayout(miniCard, BoxLayout.Y_AXIS));
-        miniCard.setBackground(new Color(15, 23, 42));
-        miniCard.setBorder(new EmptyBorder(12, 14, 12, 14));
-        miniCard.setMaximumSize(new Dimension(212, 95));
-        miniCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+        VBox miniCard = new VBox(2);
+        miniCard.setPadding(new Insets(12, 14, 12, 14));
+        miniCard.setStyle(
+                "-fx-background-color: #0F172A;" +
+                        "-fx-background-radius: 12;"
+        );
 
-        JLabel lblCardTitle = new JLabel("Pacbuck Enterprise");
-        lblCardTitle.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblCardTitle.setForeground(Color.WHITE);
-        miniCard.add(lblCardTitle);
+        Label lblCardTitle = new Label("Pacbuck Enterprise");
+        lblCardTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+        lblCardTitle.setTextFill(Color.WHITE);
 
-        JLabel lblCardSub = new JLabel("Kelompok 4 PBO UNSOED");
-        lblCardSub.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        lblCardSub.setForeground(new Color(148, 163, 184));
-        miniCard.add(lblCardSub);
+        Label lblCardSub = new Label("Kelompok 4 PBO UNSOED");
+        lblCardSub.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 10));
+        lblCardSub.setTextFill(Color.web("#94A3B8"));
 
-        miniCard.add(Box.createVerticalStrut(8));
+        Label lblCardNumber = new Label("•••• 2026 ADMIN");
+        lblCardNumber.setFont(Font.font("Consolas", FontWeight.BOLD, 11));
+        lblCardNumber.setTextFill(Color.web("#CBD5E1"));
+        VBox.setMargin(lblCardNumber, new Insets(8, 0, 0, 0));
 
-        JLabel lblCardNumber = new JLabel("•••• 2026 ADMIN");
-        lblCardNumber.setFont(new Font("Consolas", Font.BOLD, 11));
-        lblCardNumber.setForeground(new Color(203, 213, 225));
-        miniCard.add(lblCardNumber);
+        miniCard.getChildren().addAll(lblCardTitle, lblCardSub, lblCardNumber);
+        sidebar.getChildren().add(miniCard);
 
-        sidebar.add(miniCard);
         return sidebar;
     }
 
     private ContrastButton createSidebarButton(String text, boolean active) {
         ContrastButton btn = new ContrastButton(
                 text,
-                active ? COLOR_PRIMARY_DARK : new Color(241, 245, 249),
-                active ? Color.WHITE : COLOR_TEXT_MAIN
+                active ? HEX_PRIMARY_DARK : HEX_CANVAS,
+                active ? "#FFFFFF" : HEX_TEXT_MAIN
         );
         btn.setFont(FONT_BOLD);
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        btn.setPreferredSize(new Dimension(212, 40));
+        btn.setAlignment(Pos.CENTER_LEFT);
+        btn.setMaxWidth(Double.MAX_VALUE);
+        btn.setPrefHeight(40);
         return btn;
     }
 
     // =========================================================================
     // PANEL 1: TRANSAKSI KASIR (POS) UNTUK ADMIN
     // =========================================================================
-    private JPanel buatPanelPOS() {
-        JPanel panel = new JPanel(new BorderLayout(12, 12));
-        panel.setBackground(FINTECH_CANVAS);
+    private Region buatPanelPOS() {
+        BorderPane panel = new BorderPane();
+        panel.setStyle("-fx-background-color: " + HEX_CANVAS + ";");
 
         Transaksi transaksi = new Transaksi(transaksiService.generateNoFaktur(), "Admin: " + currentUser.getNama());
         final Promo[] appliedPromo = {null};
 
         // --- KOLOM KIRI (55%): KATALOG MENU ---
-        JPanel pnlKiri = new JPanel(new BorderLayout(8, 8));
-        pnlKiri.setBackground(FINTECH_CARD);
-        pnlKiri.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(12, 14, 12, 14)));
+        VBox pnlKiri = new VBox(8);
+        styleFintechCard(pnlKiri, 12, 14);
 
-        JPanel pnlHeaderMenu = new JPanel(new BorderLayout(8, 4));
-        pnlHeaderMenu.setBackground(FINTECH_CARD);
+        HBox pnlHeaderMenu = new HBox(8);
+        pnlHeaderMenu.setAlignment(Pos.CENTER_LEFT);
 
-        JPanel pnlFilterPills = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        pnlFilterPills.setBackground(FINTECH_CARD);
+        HBox pnlFilterPills = new HBox(6);
+        pnlFilterPills.setAlignment(Pos.CENTER_LEFT);
 
         ContrastButton tabAll = createFilterPill("Semua", true);
         ContrastButton tabKopi = createFilterPill("Kopi", false);
         ContrastButton tabNonKopi = createFilterPill("Non-Kopi", false);
         ContrastButton tabMakanan = createFilterPill("Makanan", false);
+        pnlFilterPills.getChildren().addAll(tabAll, tabKopi, tabNonKopi, tabMakanan);
 
-        pnlFilterPills.add(tabAll);
-        pnlFilterPills.add(tabKopi);
-        pnlFilterPills.add(tabNonKopi);
-        pnlFilterPills.add(tabMakanan);
+        Region headerSpacer = new Region();
+        HBox.setHgrow(headerSpacer, Priority.ALWAYS);
 
-        JTextField txtSearch = createPillTextField("");
-        txtSearch.setPreferredSize(new Dimension(180, 32));
-        txtSearch.setToolTipText("Cari nama menu kopi...");
+        TextField txtSearch = createPillTextField("", "Cari nama / kode menu...", true);
+        txtSearch.setPrefWidth(195);
+        txtSearch.setPrefHeight(34);
 
-        pnlHeaderMenu.add(pnlFilterPills, BorderLayout.WEST);
-        pnlHeaderMenu.add(txtSearch, BorderLayout.EAST);
-        pnlKiri.add(pnlHeaderMenu, BorderLayout.NORTH);
+        pnlHeaderMenu.getChildren().addAll(pnlFilterPills, headerSpacer, txtSearch);
 
-        DefaultTableModel modelMenu = new DefaultTableModel(new String[]{"ID", "Kode", "Nama Menu", "Kategori", "Harga", "Stok"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int col) { return false; }
-        };
-        JTable tblMenu = new JTable(modelMenu);
+        ObservableList<Menu> menuItems = FXCollections.observableArrayList();
+        TableView<Menu> tblMenu = new TableView<>(menuItems);
         styleFintechTable(tblMenu);
+        VBox.setVgrow(tblMenu, Priority.ALWAYS);
 
-        tblMenu.getColumnModel().getColumn(0).setPreferredWidth(35);
-        tblMenu.getColumnModel().getColumn(1).setPreferredWidth(60);
-        tblMenu.getColumnModel().getColumn(2).setPreferredWidth(160);
-        tblMenu.getColumnModel().getColumn(3).setPreferredWidth(80);
-        tblMenu.getColumnModel().getColumn(4).setPreferredWidth(90);
-        tblMenu.getColumnModel().getColumn(5).setPreferredWidth(50);
+        TableColumn<Menu, Integer> colMenuId = new TableColumn<>("ID");
+        colMenuId.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getId()));
+        colMenuId.setPrefWidth(40);
+
+        TableColumn<Menu, String> colMenuKode = new TableColumn<>("Kode");
+        colMenuKode.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getKode()));
+        colMenuKode.setPrefWidth(65);
+
+        TableColumn<Menu, String> colMenuNama = new TableColumn<>("Nama Menu");
+        colMenuNama.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getNama()));
+        colMenuNama.setPrefWidth(165);
+
+        TableColumn<Menu, String> colMenuKat = new TableColumn<>("Kategori");
+        colMenuKat.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getKategori()));
+        colMenuKat.setPrefWidth(85);
+
+        TableColumn<Menu, String> colMenuHarga = new TableColumn<>("Harga");
+        colMenuHarga.setCellValueFactory(c -> new ReadOnlyStringWrapper(formatRupiah(c.getValue().getHarga())));
+        colMenuHarga.setPrefWidth(95);
+
+        TableColumn<Menu, Integer> colMenuStok = new TableColumn<>("Stok");
+        colMenuStok.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getStok()));
+        colMenuStok.setPrefWidth(55);
+
+        tblMenu.getColumns().addAll(List.of(colMenuId, colMenuKode, colMenuNama, colMenuKat, colMenuHarga, colMenuStok));
 
         final String[] currentFilter = {"Semua"};
         Runnable loadMenuData = () -> {
             try {
-                modelMenu.setRowCount(0);
+                menuItems.clear();
                 List<Menu> list = menuService.getDaftarMenu(currentFilter[0]);
                 String query = txtSearch.getText().trim().toLowerCase();
                 for (Menu m : list) {
                     if (query.isEmpty() || m.getNama().toLowerCase().contains(query) || m.getKode().toLowerCase().contains(query)) {
-                        modelMenu.addRow(new Object[]{
-                                m.getId(), m.getKode(), m.getNama(), m.getKategori(),
-                                formatRupiah(m.getHarga()), m.getStok()
-                        });
+                        menuItems.add(m);
                     }
                 }
             } catch (Exception ex) {
@@ -404,171 +490,164 @@ public class AdminDashboard extends JFrame {
         String[] filterNames = {"Semua", "Kopi", "Non-Kopi", "Makanan"};
         for (int i = 0; i < filterTabs.length; i++) {
             final int idx = i;
-            filterTabs[i].addActionListener(e -> {
+            filterTabs[i].setOnAction(e -> {
                 currentFilter[0] = filterNames[idx];
                 for (ContrastButton b : filterTabs) {
-                    b.setColors(new Color(241, 245, 249), COLOR_TEXT_MAIN);
+                    b.setColors(HEX_CANVAS, HEX_TEXT_MAIN);
                 }
-                filterTabs[idx].setColors(COLOR_PRIMARY_DARK, Color.WHITE);
+                filterTabs[idx].setColors(HEX_PRIMARY_DARK, "#FFFFFF");
                 loadMenuData.run();
             });
         }
-        txtSearch.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) { loadMenuData.run(); }
-            public void removeUpdate(DocumentEvent e) { loadMenuData.run(); }
-            public void changedUpdate(DocumentEvent e) { loadMenuData.run(); }
-        });
+        txtSearch.textProperty().addListener((obs, oldVal, newVal) -> loadMenuData.run());
 
-        pnlKiri.add(new JScrollPane(tblMenu), BorderLayout.CENTER);
-
-        JPanel pnlBawahKiri = new JPanel(new BorderLayout());
-        pnlBawahKiri.setBackground(FINTECH_CARD);
-        ContrastButton btnPesanMenu = new ContrastButton("+ Tambahkan ke Keranjang", COLOR_PRIMARY_DARK, Color.WHITE);
+        ContrastButton btnPesanMenu = new ContrastButton("+ Tambahkan ke Keranjang", HEX_PRIMARY_DARK, "#FFFFFF");
         btnPesanMenu.setFont(FONT_BOLD);
-        btnPesanMenu.setPreferredSize(new Dimension(0, 36));
-        pnlBawahKiri.add(btnPesanMenu, BorderLayout.CENTER);
-        pnlKiri.add(pnlBawahKiri, BorderLayout.SOUTH);
+        btnPesanMenu.setMaxWidth(Double.MAX_VALUE);
+        btnPesanMenu.setPrefHeight(38);
+
+        pnlKiri.getChildren().addAll(pnlHeaderMenu, tblMenu, btnPesanMenu);
 
         // --- KOLOM KANAN (45%): KERANJANG & CHECKOUT ---
-        JPanel pnlKanan = new JPanel(new BorderLayout(8, 8));
-        pnlKanan.setBackground(FINTECH_CARD);
-        pnlKanan.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(12, 14, 12, 14)));
+        VBox pnlKanan = new VBox(8);
+        styleFintechCard(pnlKanan, 12, 14);
 
-        JPanel pnlHeaderCart = new JPanel(new BorderLayout());
-        pnlHeaderCart.setBackground(FINTECH_CARD);
-        JLabel lblFaktur = new JLabel("Faktur: " + transaksi.getNoFaktur());
+        HBox pnlHeaderCart = new HBox();
+        pnlHeaderCart.setAlignment(Pos.CENTER_LEFT);
+
+        Label lblFaktur = new Label("Faktur: " + transaksi.getNoFaktur());
         lblFaktur.setFont(FONT_TITLE);
-        lblFaktur.setForeground(COLOR_PRIMARY_DARK);
-        pnlHeaderCart.add(lblFaktur, BorderLayout.WEST);
+        lblFaktur.setTextFill(COLOR_PRIMARY_DARK);
 
-        JLabel lblKasirInfo = new JLabel("Operator: " + currentUser.getNama());
+        Region cartHeaderSpacer = new Region();
+        HBox.setHgrow(cartHeaderSpacer, Priority.ALWAYS);
+
+        Label lblKasirInfo = new Label("Operator: " + currentUser.getNama());
         lblKasirInfo.setFont(FONT_REGULAR);
-        lblKasirInfo.setForeground(COLOR_TEXT_MUTED);
-        pnlHeaderCart.add(lblKasirInfo, BorderLayout.EAST);
-        pnlKanan.add(pnlHeaderCart, BorderLayout.NORTH);
+        lblKasirInfo.setTextFill(COLOR_TEXT_MUTED);
 
-        DefaultTableModel modelCart = new DefaultTableModel(new String[]{"ID", "Nama Menu", "Harga", "Qty", "Subtotal"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int col) { return false; }
-        };
-        JTable tblCart = new JTable(modelCart);
+        pnlHeaderCart.getChildren().addAll(lblFaktur, cartHeaderSpacer, lblKasirInfo);
+
+        ObservableList<DetailTransaksi> cartItems = FXCollections.observableArrayList();
+        TableView<DetailTransaksi> tblCart = new TableView<>(cartItems);
         styleFintechTable(tblCart);
+        VBox.setVgrow(tblCart, Priority.ALWAYS);
 
-        tblCart.getColumnModel().getColumn(0).setPreferredWidth(30);
-        tblCart.getColumnModel().getColumn(1).setPreferredWidth(140);
-        tblCart.getColumnModel().getColumn(2).setPreferredWidth(75);
-        tblCart.getColumnModel().getColumn(3).setPreferredWidth(45);
-        tblCart.getColumnModel().getColumn(4).setPreferredWidth(85);
+        TableColumn<DetailTransaksi, Integer> colCartId = new TableColumn<>("ID");
+        colCartId.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getMenuId()));
+        colCartId.setPrefWidth(35);
 
-        // Action Toolbar Cart (+1, -1, Hapus, Kosongkan)
-        JPanel pnlCartControls = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        pnlCartControls.setBackground(FINTECH_CARD);
+        TableColumn<DetailTransaksi, String> colCartNama = new TableColumn<>("Nama Menu");
+        colCartNama.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getNamaMenu()));
+        colCartNama.setPrefWidth(140);
 
-        ContrastButton btnPlus1 = new ContrastButton("+1", COLOR_SUCCESS, Color.WHITE);
-        ContrastButton btnMinus1 = new ContrastButton("-1", COLOR_AMBER, Color.WHITE);
-        ContrastButton btnHapus = new ContrastButton("Hapus", COLOR_DANGER, Color.WHITE);
-        ContrastButton btnKosongkan = new ContrastButton("Reset", COLOR_SLATE_BTN, Color.WHITE);
+        TableColumn<DetailTransaksi, String> colCartHarga = new TableColumn<>("Harga");
+        colCartHarga.setCellValueFactory(c -> new ReadOnlyStringWrapper(formatRupiah(c.getValue().getHarga())));
+        colCartHarga.setPrefWidth(80);
 
-        pnlCartControls.add(btnPlus1);
-        pnlCartControls.add(btnMinus1);
-        pnlCartControls.add(btnHapus);
-        pnlCartControls.add(btnKosongkan);
+        TableColumn<DetailTransaksi, Integer> colCartQty = new TableColumn<>("Qty");
+        colCartQty.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getQty()));
+        colCartQty.setPrefWidth(45);
 
-        JPanel pnlCartCenter = new JPanel(new BorderLayout(4, 4));
-        pnlCartCenter.setBackground(FINTECH_CARD);
-        pnlCartCenter.add(new JScrollPane(tblCart), BorderLayout.CENTER);
-        pnlCartCenter.add(pnlCartControls, BorderLayout.SOUTH);
-        pnlKanan.add(pnlCartCenter, BorderLayout.CENTER);
+        TableColumn<DetailTransaksi, String> colCartSub = new TableColumn<>("Subtotal");
+        colCartSub.setCellValueFactory(c -> new ReadOnlyStringWrapper(formatRupiah(c.getValue().getSubtotal())));
+        colCartSub.setPrefWidth(90);
+
+        tblCart.getColumns().addAll(List.of(colCartId, colCartNama, colCartHarga, colCartQty, colCartSub));
+
+        // Action Toolbar Cart (+1, -1, Hapus, Reset)
+        HBox pnlCartControls = new HBox(6);
+        pnlCartControls.setAlignment(Pos.CENTER_RIGHT);
+
+        ContrastButton btnPlus1 = new ContrastButton("+1", HEX_SUCCESS, "#FFFFFF");
+        ContrastButton btnMinus1 = new ContrastButton("-1", HEX_AMBER, "#FFFFFF");
+        ContrastButton btnHapus = new ContrastButton("Hapus", HEX_DANGER, "#FFFFFF");
+        ContrastButton btnKosongkan = new ContrastButton("Reset", HEX_SLATE_BTN, "#FFFFFF");
+        pnlCartControls.getChildren().addAll(btnPlus1, btnMinus1, btnHapus, btnKosongkan);
 
         // Panel Pembayaran & Rincian
-        JPanel pnlCheckout = new JPanel();
-        pnlCheckout.setLayout(new BoxLayout(pnlCheckout, BoxLayout.Y_AXIS));
-        pnlCheckout.setBackground(FINTECH_CARD);
-        pnlCheckout.setBorder(new EmptyBorder(8, 0, 0, 0));
+        VBox pnlCheckout = new VBox(8);
+        pnlCheckout.setPadding(new Insets(6, 0, 0, 0));
 
         // Promo Row
-        JPanel pnlPromoRow = new JPanel(new BorderLayout(6, 0));
-        pnlPromoRow.setBackground(FINTECH_CARD);
-        JTextField txtKodePromo = createPillTextField("");
-        txtKodePromo.setToolTipText("Masukkan kode promo...");
-        ContrastButton btnTerapkanPromo = new ContrastButton("Terapkan", COLOR_PRIMARY_DARK, Color.WHITE);
-
-        pnlPromoRow.add(new JLabel("Kode Promo: "), BorderLayout.WEST);
-        pnlPromoRow.add(txtKodePromo, BorderLayout.CENTER);
-        pnlPromoRow.add(btnTerapkanPromo, BorderLayout.EAST);
-        pnlCheckout.add(pnlPromoRow);
-        pnlCheckout.add(Box.createVerticalStrut(8));
+        HBox pnlPromoRow = new HBox(6);
+        pnlPromoRow.setAlignment(Pos.CENTER_LEFT);
+        Label lblPromoTitle = new Label("Kode Promo: ");
+        lblPromoTitle.setFont(FONT_REGULAR);
+        TextField txtKodePromo = createPillTextField("", "Masukkan kode promo...", true);
+        HBox.setHgrow(txtKodePromo, Priority.ALWAYS);
+        ContrastButton btnTerapkanPromo = new ContrastButton("Terapkan", HEX_PRIMARY_DARK, "#FFFFFF");
+        pnlPromoRow.getChildren().addAll(lblPromoTitle, txtKodePromo, btnTerapkanPromo);
 
         // Ringkasan Total
-        JLabel lblSubtotalVal = new JLabel("Rp 0");
-        JLabel lblDiskonVal = new JLabel("Rp 0");
-        JLabel lblPajakVal = new JLabel("Rp 0");
-        JLabel lblTotalVal = new JLabel("Rp 0");
-        lblTotalVal.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblTotalVal.setForeground(COLOR_PRIMARY_DARK);
+        VBox pnlSummary = new VBox(3);
+        Label lblSubtotalVal = new Label("Rp 0");
+        Label lblDiskonVal = new Label("Rp 0");
+        Label lblPajakVal = new Label("Rp 0");
+        Label lblTotalVal = new Label("Rp 0");
+        lblTotalVal.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
+        lblTotalVal.setTextFill(COLOR_PRIMARY_DARK);
 
-        pnlCheckout.add(buatBarisLabel("Subtotal Pesanan:", lblSubtotalVal));
-        pnlCheckout.add(buatBarisLabel("Diskon Promo:", lblDiskonVal));
-        pnlCheckout.add(buatBarisLabel("PPN (10%):", lblPajakVal));
-        pnlCheckout.add(buatBarisLabel("Total Tagihan:", lblTotalVal));
-        pnlCheckout.add(Box.createVerticalStrut(8));
+        pnlSummary.getChildren().addAll(
+                buatBarisLabel("Subtotal Pesanan:", lblSubtotalVal),
+                buatBarisLabel("Diskon Promo:", lblDiskonVal),
+                buatBarisLabel("PPN (10%):", lblPajakVal),
+                buatBarisLabel("Total Tagihan:", lblTotalVal)
+        );
 
         // Template Nominal Uang
-        JPanel pnlQuickCash = new JPanel(new GridLayout(1, 5, 4, 0));
-        pnlQuickCash.setBackground(FINTECH_CARD);
-        ContrastButton btnUangPas = new ContrastButton("Pas", COLOR_PRIMARY_DARK, Color.WHITE);
-        ContrastButton btnUang20k = new ContrastButton("20k", COLOR_SLATE_BTN, Color.WHITE);
-        ContrastButton btnUang50k = new ContrastButton("50k", COLOR_SLATE_BTN, Color.WHITE);
-        ContrastButton btnUang100k = new ContrastButton("100k", COLOR_SLATE_BTN, Color.WHITE);
-        ContrastButton btnUang200k = new ContrastButton("200k", COLOR_SLATE_BTN, Color.WHITE);
+        HBox pnlQuickCash = new HBox(4);
+        ContrastButton btnUangPas = new ContrastButton("Pas", HEX_PRIMARY_DARK, "#FFFFFF");
+        ContrastButton btnUang20k = new ContrastButton("20k", HEX_SLATE_BTN, "#FFFFFF");
+        ContrastButton btnUang50k = new ContrastButton("50k", HEX_SLATE_BTN, "#FFFFFF");
+        ContrastButton btnUang100k = new ContrastButton("100k", HEX_SLATE_BTN, "#FFFFFF");
+        ContrastButton btnUang200k = new ContrastButton("200k", HEX_SLATE_BTN, "#FFFFFF");
 
-        pnlQuickCash.add(btnUangPas);
-        pnlQuickCash.add(btnUang20k);
-        pnlQuickCash.add(btnUang50k);
-        pnlQuickCash.add(btnUang100k);
-        pnlQuickCash.add(btnUang200k);
-        pnlCheckout.add(pnlQuickCash);
-        pnlCheckout.add(Box.createVerticalStrut(8));
+        for (ContrastButton b : new ContrastButton[]{btnUangPas, btnUang20k, btnUang50k, btnUang100k, btnUang200k}) {
+            b.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(b, Priority.ALWAYS);
+        }
+        pnlQuickCash.getChildren().addAll(btnUangPas, btnUang20k, btnUang50k, btnUang100k, btnUang200k);
 
         // Input Bayar & Kembalian
-        JPanel pnlBayarRow = new JPanel(new GridLayout(2, 2, 8, 4));
-        pnlBayarRow.setBackground(FINTECH_CARD);
-        JTextField txtBayar = createPillTextField("");
-        JLabel lblKembalian = new JLabel("Rp 0");
-        lblKembalian.setFont(FONT_BOLD);
-        lblKembalian.setForeground(COLOR_SUCCESS);
+        GridPane pnlBayarRow = new GridPane();
+        pnlBayarRow.setHgap(8);
+        pnlBayarRow.setVgap(6);
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(45);
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setPercentWidth(55);
+        pnlBayarRow.getColumnConstraints().addAll(col1, col2);
 
-        pnlBayarRow.add(new JLabel("Nominal Bayar:"));
-        pnlBayarRow.add(txtBayar);
-        pnlBayarRow.add(new JLabel("Kembalian:"));
-        pnlBayarRow.add(lblKembalian);
-        pnlCheckout.add(pnlBayarRow);
-        pnlCheckout.add(Box.createVerticalStrut(10));
+        TextField txtBayar = createPillTextField("", "Nominal tunai...", false);
+        Label lblKembalian = new Label("Rp 0");
+        lblKembalian.setFont(FONT_BOLD);
+        lblKembalian.setTextFill(COLOR_SUCCESS);
+
+        pnlBayarRow.add(new Label("Nominal Bayar:"), 0, 0);
+        pnlBayarRow.add(txtBayar, 1, 0);
+        pnlBayarRow.add(new Label("Kembalian:"), 0, 1);
+        pnlBayarRow.add(lblKembalian, 1, 1);
 
         // Tombol Bayar
-        ContrastButton btnBayar = new ContrastButton("Bayar & Cetak Struk", COLOR_SUCCESS, Color.WHITE);
-        btnBayar.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnBayar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        pnlCheckout.add(btnBayar);
+        ContrastButton btnBayar = new ContrastButton("Bayar & Cetak Struk", HEX_SUCCESS, "#FFFFFF");
+        btnBayar.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+        btnBayar.setMaxWidth(Double.MAX_VALUE);
+        btnBayar.setPrefHeight(40);
 
-        pnlKanan.add(pnlCheckout, BorderLayout.SOUTH);
+        pnlCheckout.getChildren().addAll(pnlPromoRow, pnlSummary, pnlQuickCash, pnlBayarRow, btnBayar);
+        pnlKanan.getChildren().addAll(pnlHeaderCart, tblCart, pnlCartControls, pnlCheckout);
 
         // Split Layout 55% / 45%
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, pnlKiri, pnlKanan);
-        splitPane.setResizeWeight(0.55);
-        splitPane.setDividerSize(4);
-        splitPane.setBackground(FINTECH_CANVAS);
-        panel.add(splitPane, BorderLayout.CENTER);
+        SplitPane splitPane = new SplitPane(pnlKiri, pnlKanan);
+        splitPane.setDividerPositions(0.55);
+        splitPane.setStyle("-fx-background-color: " + HEX_CANVAS + "; -fx-box-border: transparent;");
+        panel.setCenter(splitPane);
 
         // Logic Helper
         Runnable refreshCart = () -> {
-            modelCart.setRowCount(0);
-            for (DetailTransaksi dt : transaksi.getItems()) {
-                modelCart.addRow(new Object[]{
-                        dt.getMenuId(), dt.getNamaMenu(), formatRupiah(dt.getHarga()),
-                        dt.getQty(), formatRupiah(dt.getSubtotal())
-                });
-            }
+            cartItems.setAll(transaksi.getItems());
+            tblCart.refresh();
             transaksi.hitungTotal(appliedPromo[0]);
             lblSubtotalVal.setText(formatRupiah(transaksi.getSubtotal()));
             lblDiskonVal.setText("- " + formatRupiah(transaksi.getDiskon()));
@@ -584,27 +663,20 @@ public class AdminDashboard extends JFrame {
             }
         };
 
-        txtBayar.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) { refreshCart.run(); }
-            public void removeUpdate(DocumentEvent e) { refreshCart.run(); }
-            public void changedUpdate(DocumentEvent e) { refreshCart.run(); }
-        });
+        txtBayar.textProperty().addListener((obs, oldVal, newVal) -> refreshCart.run());
 
         // Event Add Item
         Runnable doAddItem = () -> {
-            int sel = tblMenu.getSelectedRow();
-            if (sel < 0) return;
-            int menuId = (int) modelMenu.getValueAt(sel, 0);
-            String nama = (String) modelMenu.getValueAt(sel, 2);
-            int stok = (int) modelMenu.getValueAt(sel, 5);
+            Menu selected = tblMenu.getSelectionModel().getSelectedItem();
+            if (selected == null) return;
 
-            if (stok <= 0) {
-                JOptionPane.showMessageDialog(panel, "Stok menu [" + nama + "] sudah habis!", "Stok Habis", JOptionPane.WARNING_MESSAGE);
+            if (selected.getStok() <= 0) {
+                showAlert(Alert.AlertType.WARNING, "Stok Habis", "Stok menu [" + selected.getNama() + "] sudah habis!");
                 return;
             }
 
             try {
-                Menu m = menuService.getMenuById(menuId);
+                Menu m = menuService.getMenuById(selected.getId());
                 transaksi.tambahItem(m, 1);
                 refreshCart.run();
             } catch (Exception ex) {
@@ -612,70 +684,64 @@ public class AdminDashboard extends JFrame {
             }
         };
 
-        btnPesanMenu.addActionListener(e -> doAddItem.run());
-        tblMenu.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2) doAddItem.run();
-            }
+        btnPesanMenu.setOnAction(e -> doAddItem.run());
+        tblMenu.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) doAddItem.run();
         });
 
         // Cart Actions
-        btnPlus1.addActionListener(e -> {
-            int sel = tblCart.getSelectedRow();
-            if (sel < 0) return;
-            int menuId = (int) modelCart.getValueAt(sel, 0);
-            transaksi.ubahQtyItem(menuId, 1);
+        btnPlus1.setOnAction(e -> {
+            DetailTransaksi sel = tblCart.getSelectionModel().getSelectedItem();
+            if (sel == null) return;
+            transaksi.ubahQtyItem(sel.getMenuId(), 1);
             refreshCart.run();
         });
 
-        btnMinus1.addActionListener(e -> {
-            int sel = tblCart.getSelectedRow();
-            if (sel < 0) return;
-            int menuId = (int) modelCart.getValueAt(sel, 0);
-            transaksi.ubahQtyItem(menuId, -1);
+        btnMinus1.setOnAction(e -> {
+            DetailTransaksi sel = tblCart.getSelectionModel().getSelectedItem();
+            if (sel == null) return;
+            transaksi.ubahQtyItem(sel.getMenuId(), -1);
             refreshCart.run();
         });
 
-        btnHapus.addActionListener(e -> {
-            int sel = tblCart.getSelectedRow();
-            if (sel < 0) return;
-            int menuId = (int) modelCart.getValueAt(sel, 0);
-            transaksi.hapusItem(menuId);
+        btnHapus.setOnAction(e -> {
+            DetailTransaksi sel = tblCart.getSelectionModel().getSelectedItem();
+            if (sel == null) return;
+            transaksi.hapusItem(sel.getMenuId());
             refreshCart.run();
         });
 
-        btnKosongkan.addActionListener(e -> {
+        btnKosongkan.setOnAction(e -> {
             transaksi.getItems().clear();
             appliedPromo[0] = null;
-            txtKodePromo.setText("");
-            txtBayar.setText("");
+            txtKodePromo.clear();
+            txtBayar.clear();
             refreshCart.run();
         });
 
         // Template Uang Cepat
-        btnUangPas.addActionListener(e -> txtBayar.setText(String.valueOf((long) Math.ceil(transaksi.getTotal()))));
-        btnUang20k.addActionListener(e -> txtBayar.setText("20000"));
-        btnUang50k.addActionListener(e -> txtBayar.setText("50000"));
-        btnUang100k.addActionListener(e -> txtBayar.setText("100000"));
-        btnUang200k.addActionListener(e -> txtBayar.setText("200000"));
+        btnUangPas.setOnAction(e -> txtBayar.setText(String.valueOf((long) Math.ceil(transaksi.getTotal()))));
+        btnUang20k.setOnAction(e -> txtBayar.setText("20000"));
+        btnUang50k.setOnAction(e -> txtBayar.setText("50000"));
+        btnUang100k.setOnAction(e -> txtBayar.setText("100000"));
+        btnUang200k.setOnAction(e -> txtBayar.setText("200000"));
 
-        btnTerapkanPromo.addActionListener(e -> {
+        btnTerapkanPromo.setOnAction(e -> {
             String kode = txtKodePromo.getText().trim();
             PromoService.PromoValidationResult res = promoService.validasiPromo(kode, transaksi.getSubtotal());
             if (res.valid) {
                 appliedPromo[0] = res.promo;
-                JOptionPane.showMessageDialog(panel, res.pesan, "Promo Berhasil", JOptionPane.INFORMATION_MESSAGE);
+                showAlert(Alert.AlertType.INFORMATION, "Promo Berhasil", res.pesan);
             } else {
                 appliedPromo[0] = null;
-                JOptionPane.showMessageDialog(panel, res.pesan, "Peringatan Promo", JOptionPane.WARNING_MESSAGE);
+                showAlert(Alert.AlertType.WARNING, "Peringatan Promo", res.pesan);
             }
             refreshCart.run();
         });
 
-        btnBayar.addActionListener(e -> {
+        btnBayar.setOnAction(e -> {
             if (transaksi.getItems().isEmpty()) {
-                JOptionPane.showMessageDialog(panel, "Keranjang pesanan masih kosong!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+                showAlert(Alert.AlertType.WARNING, "Peringatan", "Keranjang pesanan masih kosong!");
                 return;
             }
 
@@ -683,27 +749,27 @@ public class AdminDashboard extends JFrame {
             try {
                 bayar = Double.parseDouble(txtBayar.getText().trim());
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(panel, "Silakan pilih nominal uang atau ketik nominal bayar!", "Validasi Bayar", JOptionPane.WARNING_MESSAGE);
+                showAlert(Alert.AlertType.WARNING, "Validasi Bayar", "Silakan pilih nominal uang atau ketik nominal bayar!");
                 return;
             }
 
             if (bayar < transaksi.getTotal()) {
-                JOptionPane.showMessageDialog(panel, "Uang pembayaran kurang dari total tagihan!\nTotal: " + formatRupiah(transaksi.getTotal()), "Uang Kurang", JOptionPane.WARNING_MESSAGE);
+                showAlert(Alert.AlertType.WARNING, "Uang Kurang",
+                        "Uang pembayaran kurang dari total tagihan!\nTotal: " + formatRupiah(transaksi.getTotal()));
                 return;
             }
 
             double kembalian = bayar - transaksi.getTotal();
-            int confirm = JOptionPane.showConfirmDialog(panel,
+            boolean confirm = showConfirm("Konfirmasi Pembayaran",
                     "Konfirmasi Pembayaran Transaksi:\n\n" +
                             "• No Faktur   : " + transaksi.getNoFaktur() + "\n" +
                             "• Kasir       : " + transaksi.getKasirNama() + "\n" +
                             "• Total Bayar : " + formatRupiah(transaksi.getTotal()) + "\n" +
                             "• Tunai       : " + formatRupiah(bayar) + "\n" +
                             "• Kembalian   : " + formatRupiah(kembalian) + "\n\n" +
-                            "Proses transaksi dan cetak struk sekarang?",
-                    "Konfirmasi Pembayaran", JOptionPane.YES_NO_OPTION);
+                            "Proses transaksi dan cetak struk sekarang?");
 
-            if (confirm != JOptionPane.YES_OPTION) return;
+            if (!confirm) return;
 
             transaksi.setBayar(bayar);
             transaksi.setKembalian(kembalian);
@@ -714,88 +780,105 @@ public class AdminDashboard extends JFrame {
                     File fileStruk = transaksiService.cetakStruk(transaksi);
                     PDFUtil.bukaFile(fileStruk);
 
-                    JOptionPane.showMessageDialog(panel,
+                    showAlert(Alert.AlertType.INFORMATION, "Pembayaran Sukses",
                             "Transaksi Berhasil Diproses!\n" +
-                                    "Struk resmi telah dicetak dan disimpan di:\n" + fileStruk.getAbsolutePath(),
-                            "Pembayaran Sukses", JOptionPane.INFORMATION_MESSAGE);
+                                    "Struk resmi telah dicetak dan disimpan di:\n" + fileStruk.getAbsolutePath());
 
                     // Reset form
                     transaksi.setNoFaktur(transaksiService.generateNoFaktur());
                     lblFaktur.setText("Faktur: " + transaksi.getNoFaktur());
                     transaksi.getItems().clear();
                     appliedPromo[0] = null;
-                    txtKodePromo.setText("");
-                    txtBayar.setText("");
+                    txtKodePromo.clear();
+                    txtBayar.clear();
                     refreshCart.run();
                     loadMenuData.run();
                 }
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(panel, "Gagal memproses transaksi: " + ex.getMessage(), "Error Transaksi", JOptionPane.ERROR_MESSAGE);
+                showAlert(Alert.AlertType.ERROR, "Error Transaksi", "Gagal memproses transaksi: " + ex.getMessage());
             }
         });
 
         return panel;
     }
 
-    private JPanel buatBarisLabel(String label, JLabel valLabel) {
-        JPanel pnl = new JPanel(new BorderLayout());
-        pnl.setBackground(FINTECH_CARD);
-        JLabel l = new JLabel(label);
+    private HBox buatBarisLabel(String label, Label valLabel) {
+        HBox pnl = new HBox();
+        pnl.setAlignment(Pos.CENTER_LEFT);
+        Label l = new Label(label);
         l.setFont(FONT_REGULAR);
-        l.setForeground(COLOR_TEXT_MAIN);
-        pnl.add(l, BorderLayout.WEST);
-        pnl.add(valLabel, BorderLayout.EAST);
+        l.setTextFill(COLOR_TEXT_MAIN);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        pnl.getChildren().addAll(l, spacer, valLabel);
         return pnl;
     }
 
     // =========================================================================
     // PANEL 2: KELOLA MENU & STOK (FR-01, FR-03)
     // =========================================================================
-    private JPanel buatPanelMenu() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(FINTECH_CARD);
-        panel.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(16, 16, 16, 16)));
+    private Region buatPanelMenu() {
+        VBox panel = new VBox(12);
+        styleFintechCard(panel, 16, 16);
 
-        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Kode", "Nama Menu", "Kategori", "Harga", "Stok", "Keterangan Rasa/Sajian"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int col) { return false; }
-        };
-        JTable table = new JTable(model);
+        ObservableList<Menu> menuList = FXCollections.observableArrayList();
+        TableView<Menu> table = new TableView<>(menuList);
         styleFintechTable(table);
+        VBox.setVgrow(table, Priority.ALWAYS);
+
+        TableColumn<Menu, Integer> colId = new TableColumn<>("ID");
+        colId.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getId()));
+        colId.setPrefWidth(50);
+
+        TableColumn<Menu, String> colKode = new TableColumn<>("Kode");
+        colKode.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getKode()));
+        colKode.setPrefWidth(90);
+
+        TableColumn<Menu, String> colNama = new TableColumn<>("Nama Menu");
+        colNama.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getNama()));
+        colNama.setPrefWidth(220);
+
+        TableColumn<Menu, String> colKat = new TableColumn<>("Kategori");
+        colKat.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getKategori()));
+        colKat.setPrefWidth(110);
+
+        TableColumn<Menu, String> colHarga = new TableColumn<>("Harga");
+        colHarga.setCellValueFactory(c -> new ReadOnlyStringWrapper(formatRupiah(c.getValue().getHarga())));
+        colHarga.setPrefWidth(120);
+
+        TableColumn<Menu, Integer> colStok = new TableColumn<>("Stok");
+        colStok.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getStok()));
+        colStok.setPrefWidth(80);
+
+        TableColumn<Menu, String> colKet = new TableColumn<>("Keterangan Rasa/Sajian");
+        colKet.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getJenisPenyajian()));
+        colKet.setPrefWidth(220);
+
+        table.getColumns().addAll(List.of(colId, colKode, colNama, colKat, colHarga, colStok, colKet));
 
         final String[] currentFilter = {"Semua"};
 
         Runnable loadMenu = () -> {
             try {
-                model.setRowCount(0);
-                List<Menu> list = menuService.getDaftarMenu(currentFilter[0]);
-                for (Menu m : list) {
-                    model.addRow(new Object[]{
-                            m.getId(), m.getKode(), m.getNama(), m.getKategori(),
-                            formatRupiah(m.getHarga()), m.getStok(), m.getJenisPenyajian()
-                    });
-                }
+                menuList.setAll(menuService.getDaftarMenu(currentFilter[0]));
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(panel, "Gagal memuat daftar menu: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                showAlert(Alert.AlertType.ERROR, "Error", "Gagal memuat daftar menu: " + ex.getMessage());
             }
         };
         loadMenu.run();
 
         // Header and Toolbar
-        JPanel top = new JPanel(new BorderLayout(8, 8));
-        top.setBackground(FINTECH_CARD);
+        HBox top = new HBox(10);
+        top.setAlignment(Pos.BOTTOM_LEFT);
 
-        JPanel pnlTitle = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        pnlTitle.setBackground(FINTECH_CARD);
-        JLabel lblTitle = new JLabel("Katalog Menu & Manajemen Stok Real-Time (FR-01, FR-03)");
+        VBox pnlHeaderLeft = new VBox(8);
+        Label lblTitle = new Label("Katalog Menu & Manajemen Stok Real-Time (FR-01, FR-03)");
         lblTitle.setFont(FONT_TITLE);
-        lblTitle.setForeground(COLOR_TEXT_MAIN);
-        pnlTitle.add(lblTitle);
+        lblTitle.setTextFill(COLOR_TEXT_MAIN);
 
-        // Filter Pills
-        JPanel pnlFilters = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        pnlFilters.setBackground(FINTECH_CARD);
-
+        HBox pnlFilters = new HBox(6);
         ContrastButton tabAll = createFilterPill("Semua", true);
         ContrastButton tabKopi = createFilterPill("Kopi", false);
         ContrastButton tabNonKopi = createFilterPill("Non-Kopi", false);
@@ -806,586 +889,631 @@ public class AdminDashboard extends JFrame {
 
         for (int i = 0; i < filterButtons.length; i++) {
             final int idx = i;
-            filterButtons[i].addActionListener(e -> {
+            filterButtons[i].setOnAction(e -> {
                 currentFilter[0] = categories[idx];
                 for (ContrastButton b : filterButtons) {
-                    b.setColors(new Color(241, 245, 249), COLOR_TEXT_MAIN);
+                    b.setColors(HEX_CANVAS, HEX_TEXT_MAIN);
                 }
-                filterButtons[idx].setColors(COLOR_PRIMARY_DARK, Color.WHITE);
+                filterButtons[idx].setColors(HEX_PRIMARY_DARK, "#FFFFFF");
                 loadMenu.run();
             });
-            pnlFilters.add(filterButtons[i]);
+            pnlFilters.getChildren().add(filterButtons[i]);
         }
+        pnlHeaderLeft.getChildren().addAll(lblTitle, pnlFilters);
 
-        JPanel pnlHeaderLeft = new JPanel();
-        pnlHeaderLeft.setLayout(new BoxLayout(pnlHeaderLeft, BoxLayout.Y_AXIS));
-        pnlHeaderLeft.setBackground(FINTECH_CARD);
-        pnlHeaderLeft.add(pnlTitle);
-        pnlHeaderLeft.add(Box.createVerticalStrut(8));
-        pnlHeaderLeft.add(pnlFilters);
+        Region topSpacer = new Region();
+        HBox.setHgrow(topSpacer, Priority.ALWAYS);
 
-        // Action Buttons Toolbar (Kontras Tinggi)
-        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        toolbar.setBackground(FINTECH_CARD);
+        HBox toolbar = new HBox(8);
+        toolbar.setAlignment(Pos.CENTER_RIGHT);
 
-        ContrastButton btnTambah = new ContrastButton("+ Tambah Menu", COLOR_SUCCESS, Color.WHITE);
-        ContrastButton btnEdit = new ContrastButton("Edit Menu", COLOR_SLATE_BTN, Color.WHITE);
-        ContrastButton btnStok = new ContrastButton("Update Stok", COLOR_PRIMARY_DARK, Color.WHITE);
-        ContrastButton btnHapus = new ContrastButton("Hapus Menu", COLOR_DANGER, Color.WHITE);
-        ContrastButton btnRefresh = new ContrastButton("Refresh", COLOR_SLATE_BTN, Color.WHITE);
+        ContrastButton btnTambah = new ContrastButton("+ Tambah Menu", HEX_SUCCESS, "#FFFFFF");
+        ContrastButton btnEdit = new ContrastButton("Edit Menu", HEX_SLATE_BTN, "#FFFFFF");
+        ContrastButton btnStok = new ContrastButton("Update Stok", HEX_PRIMARY_DARK, "#FFFFFF");
+        ContrastButton btnHapus = new ContrastButton("Hapus Menu", HEX_DANGER, "#FFFFFF");
+        ContrastButton btnRefresh = new ContrastButton("Refresh", HEX_SLATE_BTN, "#FFFFFF");
 
-        toolbar.add(btnTambah);
-        toolbar.add(btnEdit);
-        toolbar.add(btnStok);
-        toolbar.add(btnHapus);
-        toolbar.add(btnRefresh);
+        toolbar.getChildren().addAll(btnTambah, btnEdit, btnStok, btnHapus, btnRefresh);
+        top.getChildren().addAll(pnlHeaderLeft, topSpacer, toolbar);
 
-        top.add(pnlHeaderLeft, BorderLayout.WEST);
-        top.add(toolbar, BorderLayout.EAST);
+        btnRefresh.setOnAction(e -> loadMenu.run());
+        btnTambah.setOnAction(e -> tampilkanFormMenu(null, loadMenu));
 
-        btnRefresh.addActionListener(e -> loadMenu.run());
-        btnTambah.addActionListener(e -> tampilkanFormMenu(null, panel, loadMenu));
-
-        btnEdit.addActionListener(e -> {
-            int sel = table.getSelectedRow();
-            if (sel < 0) {
-                JOptionPane.showMessageDialog(panel, "Pilih menu pada tabel yang ingin diedit!", "Perhatian", JOptionPane.WARNING_MESSAGE);
+        btnEdit.setOnAction(e -> {
+            Menu sel = table.getSelectionModel().getSelectedItem();
+            if (sel == null) {
+                showAlert(Alert.AlertType.WARNING, "Perhatian", "Pilih menu pada tabel yang ingin diedit!");
                 return;
             }
-            int id = (int) model.getValueAt(sel, 0);
             try {
-                Menu m = menuService.getMenuById(id);
-                if (m != null) tampilkanFormMenu(m, panel, loadMenu);
+                Menu m = menuService.getMenuById(sel.getId());
+                if (m != null) tampilkanFormMenu(m, loadMenu);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(panel, "Gagal mengambil data menu: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                showAlert(Alert.AlertType.ERROR, "Error", "Gagal mengambil data menu: " + ex.getMessage());
             }
         });
 
-        btnStok.addActionListener(e -> {
-            int sel = table.getSelectedRow();
-            if (sel < 0) {
-                JOptionPane.showMessageDialog(panel, "Pilih menu pada tabel yang ingin diperbarui stoknya!", "Perhatian", JOptionPane.WARNING_MESSAGE);
+        btnStok.setOnAction(e -> {
+            Menu sel = table.getSelectionModel().getSelectedItem();
+            if (sel == null) {
+                showAlert(Alert.AlertType.WARNING, "Perhatian", "Pilih menu pada tabel yang ingin diperbarui stoknya!");
                 return;
             }
-            int id = (int) model.getValueAt(sel, 0);
-            String nama = (String) model.getValueAt(sel, 2);
-            int stokSekarang = (int) model.getValueAt(sel, 5);
 
-            String input = JOptionPane.showInputDialog(panel, "Masukkan jumlah stok baru untuk [" + nama + "]:", stokSekarang);
-            if (input != null && !input.trim().isEmpty()) {
+            Optional<String> result = showInputDialog("Update Stok",
+                    "Masukkan jumlah stok baru untuk [" + sel.getNama() + "]:",
+                    String.valueOf(sel.getStok()));
+
+            if (result.isPresent() && !result.get().trim().isEmpty()) {
                 try {
-                    int stokBaru = Integer.parseInt(input.trim());
+                    int stokBaru = Integer.parseInt(result.get().trim());
                     if (stokBaru < 0) {
-                        JOptionPane.showMessageDialog(panel, "Stok tidak boleh negatif!", "Error", JOptionPane.ERROR_MESSAGE);
+                        showAlert(Alert.AlertType.ERROR, "Error", "Stok tidak boleh negatif!");
                         return;
                     }
-                    menuService.updateStok(id, stokBaru);
-                    JOptionPane.showMessageDialog(panel, "Stok " + nama + " berhasil diperbarui menjadi " + stokBaru + " unit.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                    menuService.updateStok(sel.getId(), stokBaru);
+                    showAlert(Alert.AlertType.INFORMATION, "Sukses",
+                            "Stok " + sel.getNama() + " berhasil diperbarui menjadi " + stokBaru + " unit.");
                     loadMenu.run();
                 } catch (NumberFormatException nfe) {
-                    JOptionPane.showMessageDialog(panel, "Format angka stok tidak valid!", "Error", JOptionPane.ERROR_MESSAGE);
+                    showAlert(Alert.AlertType.ERROR, "Error", "Format angka stok tidak valid!");
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(panel, "Gagal update stok: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    showAlert(Alert.AlertType.ERROR, "Error", "Gagal update stok: " + ex.getMessage());
                 }
             }
         });
 
-        btnHapus.addActionListener(e -> {
-            int sel = table.getSelectedRow();
-            if (sel < 0) {
-                JOptionPane.showMessageDialog(panel, "Pilih menu pada tabel yang ingin dihapus!", "Perhatian", JOptionPane.WARNING_MESSAGE);
+        btnHapus.setOnAction(e -> {
+            Menu sel = table.getSelectionModel().getSelectedItem();
+            if (sel == null) {
+                showAlert(Alert.AlertType.WARNING, "Perhatian", "Pilih menu pada tabel yang ingin dihapus!");
                 return;
             }
-            int id = (int) model.getValueAt(sel, 0);
-            String nama = (String) model.getValueAt(sel, 2);
 
-            int konfirmasi = JOptionPane.showConfirmDialog(panel, "Yakin ingin menghapus menu '" + nama + "'?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
-            if (konfirmasi == JOptionPane.YES_OPTION) {
+            if (showConfirm("Konfirmasi Hapus", "Yakin ingin menghapus menu '" + sel.getNama() + "'?")) {
                 try {
-                    menuService.hapusMenu(id);
-                    JOptionPane.showMessageDialog(panel, "Menu berhasil dihapus.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                    menuService.hapusMenu(sel.getId());
+                    showAlert(Alert.AlertType.INFORMATION, "Sukses", "Menu berhasil dihapus.");
                     loadMenu.run();
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(panel, "Gagal menghapus menu: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    showAlert(Alert.AlertType.ERROR, "Error", "Gagal menghapus menu: " + ex.getMessage());
                 }
             }
         });
 
-        panel.add(top, BorderLayout.NORTH);
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        panel.getChildren().addAll(top, table);
         return panel;
     }
 
-    private void tampilkanFormMenu(Menu editMenu, JPanel parent, Runnable onSaved) {
+    private void tampilkanFormMenu(Menu editMenu, Runnable onSaved) {
         boolean isEdit = editMenu != null;
-        JDialog dialog = new JDialog(this, isEdit ? "Edit Data Menu" : "Tambah Menu Baru", true);
-        dialog.setSize(440, 380);
-        dialog.setLocationRelativeTo(parent);
-        dialog.setLayout(new BorderLayout());
+        Stage dialog = createModalStage(isEdit ? "Edit Data Menu" : "Tambah Menu Baru", 440, 360);
 
-        JPanel form = new JPanel(new GridLayout(5, 2, 8, 12));
-        form.setBorder(new EmptyBorder(16, 20, 16, 20));
-        form.setBackground(Color.WHITE);
+        BorderPane root = new BorderPane();
+        GridPane form = new GridPane();
+        form.setHgap(12);
+        form.setVgap(12);
+        form.setPadding(new Insets(20));
+        form.setStyle("-fx-background-color: white;");
 
-        JTextField txtKode = createPillTextField(isEdit ? editMenu.getKode() : "CF" + (System.currentTimeMillis() % 1000));
-        JTextField txtNama = createPillTextField(isEdit ? editMenu.getNama() : "");
-        JComboBox<String> cmbKategori = new JComboBox<>(new String[]{"Kopi", "Non-Kopi", "Makanan"});
-        if (isEdit) cmbKategori.setSelectedItem(editMenu.getKategori());
-        JTextField txtHarga = createPillTextField(isEdit ? String.valueOf((long) editMenu.getHarga()) : "");
-        JTextField txtStok = createPillTextField(isEdit ? String.valueOf(editMenu.getStok()) : "50");
+        ColumnConstraints c1 = new ColumnConstraints(120);
+        ColumnConstraints c2 = new ColumnConstraints();
+        c2.setHgrow(Priority.ALWAYS);
+        form.getColumnConstraints().addAll(c1, c2);
 
-        form.add(new JLabel("Kode Menu:"));
-        form.add(txtKode);
-        form.add(new JLabel("Nama Menu:"));
-        form.add(txtNama);
-        form.add(new JLabel("Kategori:"));
-        form.add(cmbKategori);
-        form.add(new JLabel("Harga (Rp):"));
-        form.add(txtHarga);
-        form.add(new JLabel("Stok Awal:"));
-        form.add(txtStok);
+        TextField txtKode = createPillTextField(isEdit ? editMenu.getKode() : "CF" + (System.currentTimeMillis() % 1000), "Kode unik menu", false);
+        TextField txtNama = createPillTextField(isEdit ? editMenu.getNama() : "", "Nama menu...", false);
+        ComboBox<String> cmbKategori = new ComboBox<>(FXCollections.observableArrayList("Kopi", "Non-Kopi", "Makanan"));
+        cmbKategori.setMaxWidth(Double.MAX_VALUE);
+        cmbKategori.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: " + HEX_BORDER + "; -fx-background-color: white;");
+        cmbKategori.setValue(isEdit ? editMenu.getKategori() : "Kopi");
+        TextField txtHarga = createPillTextField(isEdit ? String.valueOf((long) editMenu.getHarga()) : "", "Contoh: 25000", false);
+        TextField txtStok = createPillTextField(isEdit ? String.valueOf(editMenu.getStok()) : "50", "Jumlah stok", false);
 
-        JPanel pnlBtn = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 10));
-        pnlBtn.setBackground(new Color(241, 245, 249));
+        form.add(new Label("Kode Menu:"), 0, 0);
+        form.add(txtKode, 1, 0);
+        form.add(new Label("Nama Menu:"), 0, 1);
+        form.add(txtNama, 1, 1);
+        form.add(new Label("Kategori:"), 0, 2);
+        form.add(cmbKategori, 1, 2);
+        form.add(new Label("Harga (Rp):"), 0, 3);
+        form.add(txtHarga, 1, 3);
+        form.add(new Label("Stok Awal:"), 0, 4);
+        form.add(txtStok, 1, 4);
 
-        ContrastButton btnBatal = new ContrastButton("Batal", COLOR_SLATE_BTN, Color.WHITE);
-        btnBatal.addActionListener(e -> dialog.dispose());
+        HBox pnlBtn = new HBox(8);
+        pnlBtn.setAlignment(Pos.CENTER_RIGHT);
+        pnlBtn.setPadding(new Insets(12, 20, 12, 20));
+        pnlBtn.setStyle("-fx-background-color: " + HEX_CANVAS + ";");
 
-        ContrastButton btnSimpan = new ContrastButton("Simpan Data", COLOR_SUCCESS, Color.WHITE);
-        btnSimpan.addActionListener(e -> {
+        ContrastButton btnBatal = new ContrastButton("Batal", HEX_SLATE_BTN, "#FFFFFF");
+        btnBatal.setOnAction(e -> dialog.close());
+
+        ContrastButton btnSimpan = new ContrastButton("Simpan Data", HEX_SUCCESS, "#FFFFFF");
+        btnSimpan.setOnAction(e -> {
             try {
                 String kode = txtKode.getText().trim();
                 String nama = txtNama.getText().trim();
-                String kategori = (String) cmbKategori.getSelectedItem();
+                String kategori = cmbKategori.getValue();
                 double harga = Double.parseDouble(txtHarga.getText().trim());
                 int stok = Integer.parseInt(txtStok.getText().trim());
 
                 if (nama.isEmpty() || kode.isEmpty()) {
-                    JOptionPane.showMessageDialog(dialog, "Nama dan kode menu tidak boleh kosong!", "Error", JOptionPane.ERROR_MESSAGE);
+                    showAlert(Alert.AlertType.ERROR, "Error", "Nama dan kode menu tidak boleh kosong!");
                     return;
                 }
 
                 Menu m = new Menu(isEdit ? editMenu.getId() : 0, kode, nama, kategori, harga, stok);
                 menuService.simpanMenu(m);
 
-                JOptionPane.showMessageDialog(dialog, "Data menu berhasil disimpan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
-                dialog.dispose();
+                showAlert(Alert.AlertType.INFORMATION, "Sukses", "Data menu berhasil disimpan!");
+                dialog.close();
                 onSaved.run();
             } catch (NumberFormatException nfe) {
-                JOptionPane.showMessageDialog(dialog, "Format angka harga atau stok tidak valid!", "Error", JOptionPane.ERROR_MESSAGE);
+                showAlert(Alert.AlertType.ERROR, "Error", "Format angka harga atau stok tidak valid!");
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(dialog, "Gagal menyimpan menu: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                showAlert(Alert.AlertType.ERROR, "Error", "Gagal menyimpan menu: " + ex.getMessage());
             }
         });
 
-        pnlBtn.add(btnBatal);
-        pnlBtn.add(btnSimpan);
+        pnlBtn.getChildren().addAll(btnBatal, btnSimpan);
+        root.setCenter(form);
+        root.setBottom(pnlBtn);
 
-        dialog.add(form, BorderLayout.CENTER);
-        dialog.add(pnlBtn, BorderLayout.SOUTH);
-        dialog.setVisible(true);
+        dialog.setScene(new Scene(root));
+        dialog.showAndWait();
     }
 
     // =========================================================================
     // PANEL 3: KELOLA KASIR (FR-02)
     // =========================================================================
-    private JPanel buatPanelKasir() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(FINTECH_CARD);
-        panel.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(16, 16, 16, 16)));
+    private Region buatPanelKasir() {
+        VBox panel = new VBox(12);
+        styleFintechCard(panel, 16, 16);
 
-        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Username", "Nama Kasir", "Status Akun", "Hak Akses"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int col) { return false; }
-        };
-        JTable table = new JTable(model);
+        ObservableList<Pengguna> kasirList = FXCollections.observableArrayList();
+        TableView<Pengguna> table = new TableView<>(kasirList);
         styleFintechTable(table);
+        VBox.setVgrow(table, Priority.ALWAYS);
+
+        TableColumn<Pengguna, Integer> colId = new TableColumn<>("ID");
+        colId.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getId()));
+        colId.setPrefWidth(60);
+
+        TableColumn<Pengguna, String> colUser = new TableColumn<>("Username");
+        colUser.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getUsername()));
+        colUser.setPrefWidth(160);
+
+        TableColumn<Pengguna, String> colNama = new TableColumn<>("Nama Kasir");
+        colNama.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getNama()));
+        colNama.setPrefWidth(220);
+
+        TableColumn<Pengguna, String> colStatus = new TableColumn<>("Status Akun");
+        colStatus.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getStatus()));
+        colStatus.setPrefWidth(130);
+
+        TableColumn<Pengguna, String> colAkses = new TableColumn<>("Hak Akses");
+        colAkses.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getDeskripsiAkses()));
+        colAkses.setPrefWidth(280);
+
+        table.getColumns().addAll(List.of(colId, colUser, colNama, colStatus, colAkses));
 
         Runnable loadKasir = () -> {
             try {
-                model.setRowCount(0);
-                List<Pengguna> list = authService.getDaftarKasir();
-                for (Pengguna u : list) {
-                    model.addRow(new Object[]{
-                            u.getId(), u.getUsername(), u.getNama(), u.getStatus(), u.getDeskripsiAkses()
-                    });
-                }
+                kasirList.setAll(authService.getDaftarKasir());
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(panel, "Gagal memuat kasir: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                showAlert(Alert.AlertType.ERROR, "Error", "Gagal memuat kasir: " + ex.getMessage());
             }
         };
         loadKasir.run();
 
-        JPanel top = new JPanel(new BorderLayout());
-        top.setBackground(FINTECH_CARD);
+        HBox top = new HBox(10);
+        top.setAlignment(Pos.CENTER_LEFT);
 
-        JLabel lblTitle = new JLabel("Manajemen Akun Kasir Operasional (FR-02)");
+        Label lblTitle = new Label("Manajemen Akun Kasir Operasional (FR-02)");
         lblTitle.setFont(FONT_TITLE);
-        lblTitle.setForeground(COLOR_TEXT_MAIN);
-        top.add(lblTitle, BorderLayout.WEST);
+        lblTitle.setTextFill(COLOR_TEXT_MAIN);
 
-        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        toolbar.setBackground(FINTECH_CARD);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        ContrastButton btnTambah = new ContrastButton("+ Tambah Kasir Baru", COLOR_SUCCESS, Color.WHITE);
-        ContrastButton btnToggleStatus = new ContrastButton("Toggle Status (Aktif/Nonaktif)", COLOR_PRIMARY_DARK, Color.WHITE);
-        ContrastButton btnResetPwd = new ContrastButton("Reset Password", COLOR_SLATE_BTN, Color.WHITE);
-        ContrastButton btnRefresh = new ContrastButton("Refresh", COLOR_SLATE_BTN, Color.WHITE);
+        HBox toolbar = new HBox(8);
+        ContrastButton btnTambah = new ContrastButton("+ Tambah Kasir Baru", HEX_SUCCESS, "#FFFFFF");
+        ContrastButton btnToggleStatus = new ContrastButton("Toggle Status (Aktif/Nonaktif)", HEX_PRIMARY_DARK, "#FFFFFF");
+        ContrastButton btnResetPwd = new ContrastButton("Reset Password", HEX_SLATE_BTN, "#FFFFFF");
+        ContrastButton btnRefresh = new ContrastButton("Refresh", HEX_SLATE_BTN, "#FFFFFF");
 
-        toolbar.add(btnTambah);
-        toolbar.add(btnToggleStatus);
-        toolbar.add(btnResetPwd);
-        toolbar.add(btnRefresh);
+        toolbar.getChildren().addAll(btnTambah, btnToggleStatus, btnResetPwd, btnRefresh);
+        top.getChildren().addAll(lblTitle, spacer, toolbar);
 
-        top.add(toolbar, BorderLayout.EAST);
+        btnRefresh.setOnAction(e -> loadKasir.run());
 
-        btnRefresh.addActionListener(e -> loadKasir.run());
+        btnTambah.setOnAction(e -> {
+            Stage dialog = createModalStage("Tambah Kasir Baru", 400, 270);
 
-        btnTambah.addActionListener(e -> {
-            JDialog dialog = new JDialog(this, "Tambah Kasir Baru", true);
-            dialog.setSize(400, 280);
-            dialog.setLocationRelativeTo(panel);
-            dialog.setLayout(new BorderLayout());
+            BorderPane root = new BorderPane();
+            GridPane form = new GridPane();
+            form.setHgap(12);
+            form.setVgap(12);
+            form.setPadding(new Insets(20));
+            form.setStyle("-fx-background-color: white;");
 
-            JPanel form = new JPanel(new GridLayout(3, 2, 8, 12));
-            form.setBorder(new EmptyBorder(16, 20, 16, 20));
-            form.setBackground(Color.WHITE);
+            ColumnConstraints c1 = new ColumnConstraints(115);
+            ColumnConstraints c2 = new ColumnConstraints();
+            c2.setHgrow(Priority.ALWAYS);
+            form.getColumnConstraints().addAll(c1, c2);
 
-            JTextField txtUsername = createPillTextField("");
-            JPasswordField txtPassword = new JPasswordField();
+            TextField txtUsername = createPillTextField("", "Username kasir...", false);
+            PasswordField txtPassword = new PasswordField();
             txtPassword.setFont(FONT_REGULAR);
-            txtPassword.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(5, 10, 5, 10)));
-            JTextField txtNama = createPillTextField("");
+            txtPassword.setPromptText("Password kasir...");
+            applyFieldStyle(txtPassword);
+            TextField txtNama = createPillTextField("", "Nama lengkap...", false);
 
-            form.add(new JLabel("Username:"));
-            form.add(txtUsername);
-            form.add(new JLabel("Password:"));
-            form.add(txtPassword);
-            form.add(new JLabel("Nama Lengkap:"));
-            form.add(txtNama);
+            form.add(new Label("Username:"), 0, 0);
+            form.add(txtUsername, 1, 0);
+            form.add(new Label("Password:"), 0, 1);
+            form.add(txtPassword, 1, 1);
+            form.add(new Label("Nama Lengkap:"), 0, 2);
+            form.add(txtNama, 1, 2);
 
-            JPanel pnlBtn = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 10));
-            pnlBtn.setBackground(new Color(241, 245, 249));
+            HBox pnlBtn = new HBox(8);
+            pnlBtn.setAlignment(Pos.CENTER_RIGHT);
+            pnlBtn.setPadding(new Insets(12, 20, 12, 20));
+            pnlBtn.setStyle("-fx-background-color: " + HEX_CANVAS + ";");
 
-            ContrastButton btnBatal = new ContrastButton("Batal", COLOR_SLATE_BTN, Color.WHITE);
-            btnBatal.addActionListener(ev -> dialog.dispose());
+            ContrastButton btnBatal = new ContrastButton("Batal", HEX_SLATE_BTN, "#FFFFFF");
+            btnBatal.setOnAction(ev -> dialog.close());
 
-            ContrastButton btnSimpan = new ContrastButton("Simpan Akun", COLOR_SUCCESS, Color.WHITE);
-            btnSimpan.addActionListener(ev -> {
+            ContrastButton btnSimpan = new ContrastButton("Simpan Akun", HEX_SUCCESS, "#FFFFFF");
+            btnSimpan.setOnAction(ev -> {
                 String u = txtUsername.getText().trim();
-                String p = new String(txtPassword.getPassword()).trim();
+                String p = txtPassword.getText().trim();
                 String n = txtNama.getText().trim();
 
                 if (u.isEmpty() || p.isEmpty() || n.isEmpty()) {
-                    JOptionPane.showMessageDialog(dialog, "Semua field wajib diisi!", "Error", JOptionPane.ERROR_MESSAGE);
+                    showAlert(Alert.AlertType.ERROR, "Error", "Semua field wajib diisi!");
                     return;
                 }
 
                 try {
                     Pengguna baru = new Kasir(0, u, p, n, "AKTIF");
                     authService.simpanKasir(baru);
-                    JOptionPane.showMessageDialog(dialog, "Akun kasir berhasil didaftarkan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
-                    dialog.dispose();
+                    showAlert(Alert.AlertType.INFORMATION, "Sukses", "Akun kasir berhasil didaftarkan!");
+                    dialog.close();
                     loadKasir.run();
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(dialog, "Gagal membuat kasir: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    showAlert(Alert.AlertType.ERROR, "Error", "Gagal membuat kasir: " + ex.getMessage());
                 }
             });
 
-            pnlBtn.add(btnBatal);
-            pnlBtn.add(btnSimpan);
+            pnlBtn.getChildren().addAll(btnBatal, btnSimpan);
+            root.setCenter(form);
+            root.setBottom(pnlBtn);
 
-            dialog.add(form, BorderLayout.CENTER);
-            dialog.add(pnlBtn, BorderLayout.SOUTH);
-            dialog.setVisible(true);
+            dialog.setScene(new Scene(root));
+            dialog.showAndWait();
         });
 
-        btnToggleStatus.addActionListener(e -> {
-            int sel = table.getSelectedRow();
-            if (sel < 0) {
-                JOptionPane.showMessageDialog(panel, "Pilih kasir yang ingin diubah statusnya!", "Perhatian", JOptionPane.WARNING_MESSAGE);
+        btnToggleStatus.setOnAction(e -> {
+            Pengguna sel = table.getSelectionModel().getSelectedItem();
+            if (sel == null) {
+                showAlert(Alert.AlertType.WARNING, "Perhatian", "Pilih kasir yang ingin diubah statusnya!");
                 return;
             }
-            int id = (int) model.getValueAt(sel, 0);
-            String nama = (String) model.getValueAt(sel, 2);
-            String statusSkrg = (String) model.getValueAt(sel, 3);
-            String statusTarget = "AKTIF".equalsIgnoreCase(statusSkrg) ? "NONAKTIF" : "AKTIF";
+            String statusTarget = "AKTIF".equalsIgnoreCase(sel.getStatus()) ? "NONAKTIF" : "AKTIF";
 
-            int konf = JOptionPane.showConfirmDialog(panel, "Ubah status akun '" + nama + "' menjadi " + statusTarget + "?", "Ubah Status", JOptionPane.YES_NO_OPTION);
-            if (konf == JOptionPane.YES_OPTION) {
+            if (showConfirm("Ubah Status", "Ubah status akun '" + sel.getNama() + "' menjadi " + statusTarget + "?")) {
                 try {
-                    authService.ubahStatusKasir(id, statusTarget);
-                    JOptionPane.showMessageDialog(panel, "Status berhasil diperbarui.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                    authService.ubahStatusKasir(sel.getId(), statusTarget);
+                    showAlert(Alert.AlertType.INFORMATION, "Sukses", "Status berhasil diperbarui.");
                     loadKasir.run();
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(panel, "Gagal ubah status: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    showAlert(Alert.AlertType.ERROR, "Error", "Gagal ubah status: " + ex.getMessage());
                 }
             }
         });
 
-        btnResetPwd.addActionListener(e -> {
-            int sel = table.getSelectedRow();
-            if (sel < 0) {
-                JOptionPane.showMessageDialog(panel, "Pilih kasir yang ingin direset passwordnya!", "Perhatian", JOptionPane.WARNING_MESSAGE);
+        btnResetPwd.setOnAction(e -> {
+            Pengguna sel = table.getSelectionModel().getSelectedItem();
+            if (sel == null) {
+                showAlert(Alert.AlertType.WARNING, "Perhatian", "Pilih kasir yang ingin direset passwordnya!");
                 return;
             }
-            int id = (int) model.getValueAt(sel, 0);
-            String username = (String) model.getValueAt(sel, 1);
-            String nama = (String) model.getValueAt(sel, 2);
 
-            String pwdBaru = JOptionPane.showInputDialog(panel, "Masukkan password baru untuk kasir [" + username + "]:");
-            if (pwdBaru != null && !pwdBaru.trim().isEmpty()) {
+            Optional<String> pwdBaru = showInputDialog("Reset Password",
+                    "Masukkan password baru untuk kasir [" + sel.getUsername() + "]:", "");
+
+            if (pwdBaru.isPresent() && !pwdBaru.get().trim().isEmpty()) {
                 try {
-                    Pengguna u = new Kasir(id, username, pwdBaru.trim(), nama, "AKTIF");
+                    Pengguna u = new Kasir(sel.getId(), sel.getUsername(), pwdBaru.get().trim(), sel.getNama(), "AKTIF");
                     authService.simpanKasir(u);
-                    JOptionPane.showMessageDialog(panel, "Password berhasil diperbarui!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                    showAlert(Alert.AlertType.INFORMATION, "Sukses", "Password berhasil diperbarui!");
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(panel, "Gagal reset password: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    showAlert(Alert.AlertType.ERROR, "Error", "Gagal reset password: " + ex.getMessage());
                 }
             }
         });
 
-        panel.add(top, BorderLayout.NORTH);
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        panel.getChildren().addAll(top, table);
         return panel;
     }
 
     // =========================================================================
     // PANEL 4: KELOLA PROMO (FR-07)
     // =========================================================================
-    private JPanel buatPanelPromo() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(FINTECH_CARD);
-        panel.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(16, 16, 16, 16)));
+    private Region buatPanelPromo() {
+        VBox panel = new VBox(12);
+        styleFintechCard(panel, 16, 16);
 
-        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Kode Promo", "Nama Promo", "Tipe", "Nilai Diskon", "Min Belanja", "Tgl Mulai", "Tgl Selesai", "Status"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int col) { return false; }
-        };
-        JTable table = new JTable(model);
+        ObservableList<Promo> promoList = FXCollections.observableArrayList();
+        TableView<Promo> table = new TableView<>(promoList);
         styleFintechTable(table);
+        VBox.setVgrow(table, Priority.ALWAYS);
+
+        TableColumn<Promo, Integer> colId = new TableColumn<>("ID");
+        colId.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getId()));
+        colId.setPrefWidth(45);
+
+        TableColumn<Promo, String> colKode = new TableColumn<>("Kode Promo");
+        colKode.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getKode()));
+        colKode.setPrefWidth(120);
+
+        TableColumn<Promo, String> colNama = new TableColumn<>("Nama Promo");
+        colNama.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getNamaPromo()));
+        colNama.setPrefWidth(180);
+
+        TableColumn<Promo, String> colTipe = new TableColumn<>("Tipe");
+        colTipe.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getTipeDiskon()));
+        colTipe.setPrefWidth(95);
+
+        TableColumn<Promo, String> colNilai = new TableColumn<>("Nilai Diskon");
+        colNilai.setCellValueFactory(c -> {
+            Promo p = c.getValue();
+            String val = "PERSEN".equalsIgnoreCase(p.getTipeDiskon())
+                    ? ((int) p.getNilaiDiskon() + "%")
+                    : formatRupiah(p.getNilaiDiskon());
+            return new ReadOnlyStringWrapper(val);
+        });
+        colNilai.setPrefWidth(115);
+
+        TableColumn<Promo, String> colMin = new TableColumn<>("Min Belanja");
+        colMin.setCellValueFactory(c -> new ReadOnlyStringWrapper(formatRupiah(c.getValue().getMinBelanja())));
+        colMin.setPrefWidth(120);
+
+        TableColumn<Promo, String> colMulai = new TableColumn<>("Tgl Mulai");
+        colMulai.setCellValueFactory(c -> new ReadOnlyStringWrapper(String.valueOf(c.getValue().getTglMulai())));
+        colMulai.setPrefWidth(105);
+
+        TableColumn<Promo, String> colSelesai = new TableColumn<>("Tgl Selesai");
+        colSelesai.setCellValueFactory(c -> new ReadOnlyStringWrapper(String.valueOf(c.getValue().getTglSelesai())));
+        colSelesai.setPrefWidth(105);
+
+        TableColumn<Promo, String> colStatus = new TableColumn<>("Status");
+        colStatus.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getStatus()));
+        colStatus.setPrefWidth(90);
+
+        table.getColumns().addAll(List.of(colId, colKode, colNama, colTipe, colNilai, colMin, colMulai, colSelesai, colStatus));
 
         Runnable loadPromo = () -> {
             try {
-                model.setRowCount(0);
-                List<Promo> list = promoService.getDaftarPromo();
-                for (Promo p : list) {
-                    String strDiskon = "PERSEN".equalsIgnoreCase(p.getTipeDiskon()) ? ((int) p.getNilaiDiskon() + "%") : formatRupiah(p.getNilaiDiskon());
-                    model.addRow(new Object[]{
-                            p.getId(), p.getKode(), p.getNamaPromo(), p.getTipeDiskon(), strDiskon,
-                            formatRupiah(p.getMinBelanja()), p.getTglMulai(), p.getTglSelesai(), p.getStatus()
-                    });
-                }
+                promoList.setAll(promoService.getDaftarPromo());
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(panel, "Gagal memuat promo: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                showAlert(Alert.AlertType.ERROR, "Error", "Gagal memuat promo: " + ex.getMessage());
             }
         };
         loadPromo.run();
 
-        JPanel top = new JPanel(new BorderLayout());
-        top.setBackground(FINTECH_CARD);
+        HBox top = new HBox(10);
+        top.setAlignment(Pos.CENTER_LEFT);
 
-        JLabel lblTitle = new JLabel("Manajemen Kode Promo & Diskon Penjualan (FR-07)");
+        Label lblTitle = new Label("Manajemen Kode Promo & Diskon Penjualan (FR-07)");
         lblTitle.setFont(FONT_TITLE);
-        lblTitle.setForeground(COLOR_TEXT_MAIN);
-        top.add(lblTitle, BorderLayout.WEST);
+        lblTitle.setTextFill(COLOR_TEXT_MAIN);
 
-        // Action Toolbar (Solid ContrastButton - No white washed-out buttons!)
-        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        toolbar.setBackground(FINTECH_CARD);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        ContrastButton btnTambah = new ContrastButton("+ Tambah Promo Baru", COLOR_SUCCESS, Color.WHITE);
-        ContrastButton btnHapus = new ContrastButton("Hapus Promo", COLOR_DANGER, Color.WHITE);
-        ContrastButton btnRefresh = new ContrastButton("Refresh", COLOR_SLATE_BTN, Color.WHITE);
+        HBox toolbar = new HBox(8);
+        ContrastButton btnTambah = new ContrastButton("+ Tambah Promo Baru", HEX_SUCCESS, "#FFFFFF");
+        ContrastButton btnHapus = new ContrastButton("Hapus Promo", HEX_DANGER, "#FFFFFF");
+        ContrastButton btnRefresh = new ContrastButton("Refresh", HEX_SLATE_BTN, "#FFFFFF");
 
-        toolbar.add(btnTambah);
-        toolbar.add(btnHapus);
-        toolbar.add(btnRefresh);
+        toolbar.getChildren().addAll(btnTambah, btnHapus, btnRefresh);
+        top.getChildren().addAll(lblTitle, spacer, toolbar);
 
-        top.add(toolbar, BorderLayout.EAST);
+        btnRefresh.setOnAction(e -> loadPromo.run());
 
-        btnRefresh.addActionListener(e -> loadPromo.run());
+        btnTambah.setOnAction(e -> {
+            Stage dialog = createModalStage("Tambah Promo Baru", 440, 420);
 
-        btnTambah.addActionListener(e -> {
-            JDialog dialog = new JDialog(this, "Tambah Promo Baru", true);
-            dialog.setSize(440, 420);
-            dialog.setLocationRelativeTo(panel);
-            dialog.setLayout(new BorderLayout());
+            BorderPane root = new BorderPane();
+            GridPane form = new GridPane();
+            form.setHgap(12);
+            form.setVgap(10);
+            form.setPadding(new Insets(20));
+            form.setStyle("-fx-background-color: white;");
 
-            JPanel form = new JPanel(new GridLayout(7, 2, 8, 10));
-            form.setBorder(new EmptyBorder(16, 20, 16, 20));
-            form.setBackground(Color.WHITE);
+            ColumnConstraints c1 = new ColumnConstraints(145);
+            ColumnConstraints c2 = new ColumnConstraints();
+            c2.setHgrow(Priority.ALWAYS);
+            form.getColumnConstraints().addAll(c1, c2);
 
-            JTextField txtKode = createPillTextField("DISKON" + (int)(Math.random() * 90 + 10));
-            JTextField txtNama = createPillTextField("");
-            JComboBox<String> cmbTipe = new JComboBox<>(new String[]{"PERSEN", "NOMINAL"});
-            JTextField txtNilai = createPillTextField("10");
-            JTextField txtMin = createPillTextField("50000");
-            JTextField txtMulai = createPillTextField(LocalDate.now().toString());
-            JTextField txtSelesai = createPillTextField(LocalDate.now().plusMonths(1).toString());
+            TextField txtKode = createPillTextField("DISKON" + (int) (Math.random() * 90 + 10));
+            TextField txtNama = createPillTextField("", "Nama promo...", false);
+            ComboBox<String> cmbTipe = new ComboBox<>(FXCollections.observableArrayList("PERSEN", "NOMINAL"));
+            cmbTipe.setMaxWidth(Double.MAX_VALUE);
+            cmbTipe.setStyle("-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: " + HEX_BORDER + "; -fx-background-color: white;");
+            cmbTipe.setValue("PERSEN");
+            TextField txtNilai = createPillTextField("10");
+            TextField txtMin = createPillTextField("50000");
+            TextField txtMulai = createPillTextField(LocalDate.now().toString());
+            TextField txtSelesai = createPillTextField(LocalDate.now().plusMonths(1).toString());
 
-            form.add(new JLabel("Kode Promo:"));
-            form.add(txtKode);
-            form.add(new JLabel("Nama Promo:"));
-            form.add(txtNama);
-            form.add(new JLabel("Tipe Diskon:"));
-            form.add(cmbTipe);
-            form.add(new JLabel("Besaran Diskon:"));
-            form.add(txtNilai);
-            form.add(new JLabel("Min Belanja (Rp):"));
-            form.add(txtMin);
-            form.add(new JLabel("Tgl Mulai (YYYY-MM-DD):"));
-            form.add(txtMulai);
-            form.add(new JLabel("Tgl Selesai (YYYY-MM-DD):"));
-            form.add(txtSelesai);
+            form.add(new Label("Kode Promo:"), 0, 0);
+            form.add(txtKode, 1, 0);
+            form.add(new Label("Nama Promo:"), 0, 1);
+            form.add(txtNama, 1, 1);
+            form.add(new Label("Tipe Diskon:"), 0, 2);
+            form.add(cmbTipe, 1, 2);
+            form.add(new Label("Besaran Diskon:"), 0, 3);
+            form.add(txtNilai, 1, 3);
+            form.add(new Label("Min Belanja (Rp):"), 0, 4);
+            form.add(txtMin, 1, 4);
+            form.add(new Label("Tgl Mulai (YYYY-MM-DD):"), 0, 5);
+            form.add(txtMulai, 1, 5);
+            form.add(new Label("Tgl Selesai (YYYY-MM-DD):"), 0, 6);
+            form.add(txtSelesai, 1, 6);
 
-            JPanel pnlBtn = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 10));
-            pnlBtn.setBackground(new Color(241, 245, 249));
+            HBox pnlBtn = new HBox(8);
+            pnlBtn.setAlignment(Pos.CENTER_RIGHT);
+            pnlBtn.setPadding(new Insets(12, 20, 12, 20));
+            pnlBtn.setStyle("-fx-background-color: " + HEX_CANVAS + ";");
 
-            ContrastButton btnBatal = new ContrastButton("Batal", COLOR_SLATE_BTN, Color.WHITE);
-            btnBatal.addActionListener(ev -> dialog.dispose());
+            ContrastButton btnBatal = new ContrastButton("Batal", HEX_SLATE_BTN, "#FFFFFF");
+            btnBatal.setOnAction(ev -> dialog.close());
 
-            ContrastButton btnSimpan = new ContrastButton("Simpan Promo", COLOR_SUCCESS, Color.WHITE);
-            btnSimpan.addActionListener(ev -> {
+            ContrastButton btnSimpan = new ContrastButton("Simpan Promo", HEX_SUCCESS, "#FFFFFF");
+            btnSimpan.setOnAction(ev -> {
                 try {
                     String kode = txtKode.getText().trim().toUpperCase();
                     String nama = txtNama.getText().trim();
-                    String tipe = (String) cmbTipe.getSelectedItem();
+                    String tipe = cmbTipe.getValue();
                     double nilai = Double.parseDouble(txtNilai.getText().trim());
                     double min = Double.parseDouble(txtMin.getText().trim());
                     LocalDate tglMulai = LocalDate.parse(txtMulai.getText().trim());
                     LocalDate tglSelesai = LocalDate.parse(txtSelesai.getText().trim());
 
                     if (kode.isEmpty() || nama.isEmpty()) {
-                        JOptionPane.showMessageDialog(dialog, "Kode dan Nama promo tidak boleh kosong!", "Error", JOptionPane.ERROR_MESSAGE);
+                        showAlert(Alert.AlertType.ERROR, "Error", "Kode dan Nama promo tidak boleh kosong!");
                         return;
                     }
 
                     Promo p = new Promo(0, kode, nama, tipe, nilai, min, tglMulai, tglSelesai, "AKTIF");
                     promoService.simpanPromo(p);
-                    JOptionPane.showMessageDialog(dialog, "Promo berhasil ditambahkan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
-                    dialog.dispose();
+                    showAlert(Alert.AlertType.INFORMATION, "Sukses", "Promo berhasil ditambahkan!");
+                    dialog.close();
                     loadPromo.run();
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(dialog, "Gagal simpan promo: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    showAlert(Alert.AlertType.ERROR, "Error", "Gagal simpan promo: " + ex.getMessage());
                 }
             });
 
-            pnlBtn.add(btnBatal);
-            pnlBtn.add(btnSimpan);
+            pnlBtn.getChildren().addAll(btnBatal, btnSimpan);
+            root.setCenter(form);
+            root.setBottom(pnlBtn);
 
-            dialog.add(form, BorderLayout.CENTER);
-            dialog.add(pnlBtn, BorderLayout.SOUTH);
-            dialog.setVisible(true);
+            dialog.setScene(new Scene(root));
+            dialog.showAndWait();
         });
 
-        btnHapus.addActionListener(e -> {
-            int sel = table.getSelectedRow();
-            if (sel < 0) {
-                JOptionPane.showMessageDialog(panel, "Pilih promo yang ingin dihapus!", "Perhatian", JOptionPane.WARNING_MESSAGE);
+        btnHapus.setOnAction(e -> {
+            Promo sel = table.getSelectionModel().getSelectedItem();
+            if (sel == null) {
+                showAlert(Alert.AlertType.WARNING, "Perhatian", "Pilih promo yang ingin dihapus!");
                 return;
             }
-            int id = (int) model.getValueAt(sel, 0);
-            String kode = (String) model.getValueAt(sel, 1);
 
-            int konf = JOptionPane.showConfirmDialog(panel, "Yakin ingin menghapus promo '" + kode + "'?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
-            if (konf == JOptionPane.YES_OPTION) {
+            if (showConfirm("Konfirmasi Hapus", "Yakin ingin menghapus promo '" + sel.getKode() + "'?")) {
                 try {
-                    promoService.hapusPromo(id);
-                    JOptionPane.showMessageDialog(panel, "Promo berhasil dihapus.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                    promoService.hapusPromo(sel.getId());
+                    showAlert(Alert.AlertType.INFORMATION, "Sukses", "Promo berhasil dihapus.");
                     loadPromo.run();
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(panel, "Gagal menghapus promo: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    showAlert(Alert.AlertType.ERROR, "Error", "Gagal menghapus promo: " + ex.getMessage());
                 }
             }
         });
 
-        panel.add(top, BorderLayout.NORTH);
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        panel.getChildren().addAll(top, table);
         return panel;
     }
 
     // =========================================================================
     // PANEL 5: LAPORAN PENJUALAN (FR-04)
     // =========================================================================
-    private JPanel buatPanelLaporan() {
-        JPanel panel = new JPanel(new BorderLayout(14, 14));
-        panel.setBackground(FINTECH_CANVAS);
+    private Region buatPanelLaporan() {
+        VBox panel = new VBox(14);
+        panel.setStyle("-fx-background-color: " + HEX_CANVAS + ";");
 
         final String[] periode = {"Harian"};
 
-        JPanel filterCard = new JPanel(new BorderLayout());
-        filterCard.setBackground(FINTECH_CARD);
-        filterCard.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(12, 16, 12, 16)));
+        HBox filterCard = new HBox(10);
+        filterCard.setAlignment(Pos.CENTER_LEFT);
+        styleFintechCard(filterCard, 12, 16);
 
-        JLabel lblTitle = new JLabel("Laporan Eksekutif Penjualan & Analitik Menu (FR-04)");
+        Label lblTitle = new Label("Laporan Eksekutif Penjualan & Analitik Menu (FR-04)");
         lblTitle.setFont(FONT_TITLE);
-        lblTitle.setForeground(COLOR_TEXT_MAIN);
-        filterCard.add(lblTitle, BorderLayout.WEST);
+        lblTitle.setTextFill(COLOR_TEXT_MAIN);
 
-        JPanel pnlPills = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        pnlPills.setBackground(FINTECH_CARD);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        HBox pnlPills = new HBox(6);
         ContrastButton tabHarian = createFilterPill("Harian (Hari Ini)", true);
         ContrastButton tabMingguan = createFilterPill("Mingguan (Minggu Ini)", false);
         ContrastButton tabBulanan = createFilterPill("Bulanan (Bulan Ini)", false);
 
         ContrastButton[] periodBtns = {tabHarian, tabMingguan, tabBulanan};
         String[] periodKeys = {"Harian", "Mingguan", "Bulanan"};
-
-        pnlPills.add(tabHarian);
-        pnlPills.add(tabMingguan);
-        pnlPills.add(tabBulanan);
-        filterCard.add(pnlPills, BorderLayout.EAST);
-
-        panel.add(filterCard, BorderLayout.NORTH);
-
-        JPanel centerContainer = new JPanel(new BorderLayout(14, 14));
-        centerContainer.setBackground(FINTECH_CANVAS);
+        pnlPills.getChildren().addAll(tabHarian, tabMingguan, tabBulanan);
+        filterCard.getChildren().addAll(lblTitle, spacer, pnlPills);
 
         // 3 KPI Cards
-        JPanel pnlKpis = new JPanel(new GridLayout(1, 3, 14, 14));
-        pnlKpis.setBackground(FINTECH_CANVAS);
+        HBox pnlKpis = new HBox(14);
 
-        JLabel lblValOmset = new JLabel("Rp 0");
+        Label lblValOmset = new Label("Rp 0");
         lblValOmset.setFont(FONT_HERO_NUM);
-        lblValOmset.setForeground(COLOR_SUCCESS);
+        lblValOmset.setTextFill(COLOR_SUCCESS);
 
-        JLabel lblValTrx = new JLabel("0 Transaksi");
+        Label lblValTrx = new Label("0 Transaksi");
         lblValTrx.setFont(FONT_HERO_NUM);
-        lblValTrx.setForeground(COLOR_PRIMARY_DARK);
+        lblValTrx.setTextFill(COLOR_PRIMARY_DARK);
 
-        JLabel lblValAvg = new JLabel("Rp 0");
+        Label lblValAvg = new Label("Rp 0");
         lblValAvg.setFont(FONT_HERO_NUM);
-        lblValAvg.setForeground(COLOR_SLATE_BTN);
+        lblValAvg.setTextFill(COLOR_SLATE_BTN);
 
-        pnlKpis.add(buatKpiCard("Total Omset Penjualan", lblValOmset, "Akumulasi pendapatan kotor", COLOR_SUCCESS));
-        pnlKpis.add(buatKpiCard("Jumlah Transaksi", lblValTrx, "Total pesanan kasir sukses", COLOR_PRIMARY_DARK));
-        pnlKpis.add(buatKpiCard("Rata-Rata per Transaksi", lblValAvg, "Nilai rata-rata per transaksi", COLOR_SLATE_BTN));
-
-        centerContainer.add(pnlKpis, BorderLayout.NORTH);
+        VBox kpi1 = buatKpiCard("Total Omset Penjualan", lblValOmset, "Akumulasi pendapatan kotor");
+        VBox kpi2 = buatKpiCard("Jumlah Transaksi", lblValTrx, "Total pesanan kasir sukses");
+        VBox kpi3 = buatKpiCard("Rata-Rata per Transaksi", lblValAvg, "Nilai rata-rata per transaksi");
+        HBox.setHgrow(kpi1, Priority.ALWAYS);
+        HBox.setHgrow(kpi2, Priority.ALWAYS);
+        HBox.setHgrow(kpi3, Priority.ALWAYS);
+        pnlKpis.getChildren().addAll(kpi1, kpi2, kpi3);
 
         // 5 Menu Terlaris Table
-        JPanel pnlBestSellers = new JPanel(new BorderLayout(10, 10));
-        pnlBestSellers.setBackground(FINTECH_CARD);
-        pnlBestSellers.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(14, 16, 14, 16)));
+        VBox pnlBestSellers = new VBox(10);
+        styleFintechCard(pnlBestSellers, 14, 16);
+        VBox.setVgrow(pnlBestSellers, Priority.ALWAYS);
 
-        JLabel lblTableTitle = new JLabel("Top 5 Menu Terlaris (Best Sellers)");
+        Label lblTableTitle = new Label("Top 5 Menu Terlaris (Best Sellers)");
         lblTableTitle.setFont(FONT_TITLE);
-        lblTableTitle.setForeground(COLOR_TEXT_MAIN);
-        pnlBestSellers.add(lblTableTitle, BorderLayout.NORTH);
+        lblTableTitle.setTextFill(COLOR_TEXT_MAIN);
 
-        DefaultTableModel modelTop = new DefaultTableModel(new String[]{"Peringkat", "Nama Menu", "Total Terjual (Cup/Porsi)", "Total Nilai Penjualan"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int col) { return false; }
-        };
-        JTable tableTop = new JTable(modelTop);
+        ObservableList<String[]> topRows = FXCollections.observableArrayList();
+        TableView<String[]> tableTop = new TableView<>(topRows);
         styleFintechTable(tableTop);
+        VBox.setVgrow(tableTop, Priority.ALWAYS);
 
-        pnlBestSellers.add(new JScrollPane(tableTop), BorderLayout.CENTER);
-        centerContainer.add(pnlBestSellers, BorderLayout.CENTER);
+        TableColumn<String[], String> colRank = new TableColumn<>("Peringkat");
+        colRank.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue()[0]));
+        colRank.setPrefWidth(120);
 
-        panel.add(centerContainer, BorderLayout.CENTER);
+        TableColumn<String[], String> colMenuName = new TableColumn<>("Nama Menu");
+        colMenuName.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue()[1]));
+        colMenuName.setPrefWidth(280);
+
+        TableColumn<String[], String> colSold = new TableColumn<>("Total Terjual (Cup/Porsi)");
+        colSold.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue()[2]));
+        colSold.setPrefWidth(200);
+
+        TableColumn<String[], String> colSales = new TableColumn<>("Total Nilai Penjualan");
+        colSales.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue()[3]));
+        colSales.setPrefWidth(220);
+
+        tableTop.getColumns().addAll(List.of(colRank, colMenuName, colSold, colSales));
+        pnlBestSellers.getChildren().addAll(lblTableTitle, tableTop);
 
         Runnable refreshLaporan = () -> {
             try {
@@ -1396,227 +1524,345 @@ public class AdminDashboard extends JFrame {
                 double avg = data.totalTransaksi > 0 ? (data.totalPendapatan / data.totalTransaksi) : 0;
                 lblValAvg.setText(formatRupiah(avg));
 
-                modelTop.setRowCount(0);
+                topRows.clear();
                 String[] badges = {"Juara 1", "Juara 2", "Juara 3", "#4", "#5"};
                 int rank = 0;
                 for (Object[] item : data.menuTerlaris) {
                     String badge = rank < badges.length ? badges[rank] : ("#" + (rank + 1));
-                    modelTop.addRow(new Object[]{
-                            badge, item[0], item[1] + " porsi", formatRupiah((double) item[2])
+                    topRows.add(new String[]{
+                            badge,
+                            String.valueOf(item[0]),
+                            item[1] + " porsi",
+                            formatRupiah((double) item[2])
                     });
                     rank++;
                 }
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(panel, "Gagal memuat laporan: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                showAlert(Alert.AlertType.ERROR, "Error", "Gagal memuat laporan: " + ex.getMessage());
             }
         };
+        this.refreshLaporanHook = refreshLaporan;
 
         for (int i = 0; i < periodBtns.length; i++) {
             final int idx = i;
-            periodBtns[i].addActionListener(e -> {
+            periodBtns[i].setOnAction(e -> {
                 periode[0] = periodKeys[idx];
                 for (ContrastButton b : periodBtns) {
-                    b.setColors(new Color(241, 245, 249), COLOR_TEXT_MAIN);
+                    b.setColors(HEX_CANVAS, HEX_TEXT_MAIN);
                 }
-                periodBtns[idx].setColors(COLOR_PRIMARY_DARK, Color.WHITE);
+                periodBtns[idx].setColors(HEX_PRIMARY_DARK, "#FFFFFF");
                 refreshLaporan.run();
             });
         }
 
         refreshLaporan.run();
+        panel.getChildren().addAll(filterCard, pnlKpis, pnlBestSellers);
         return panel;
     }
 
-    private JPanel buatKpiCard(String title, JLabel valLabel, String sub, Color accent) {
-        JPanel card = new JPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(FINTECH_CARD);
-        card.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(16, 18, 16, 18)));
+    private VBox buatKpiCard(String title, Label valLabel, String sub) {
+        VBox card = new VBox(6);
+        styleFintechCard(card, 16, 18);
 
-        JLabel lblT = new JLabel(title);
+        Label lblT = new Label(title);
         lblT.setFont(FONT_BOLD);
-        lblT.setForeground(COLOR_TEXT_MUTED);
+        lblT.setTextFill(COLOR_TEXT_MUTED);
 
-        JLabel lblS = new JLabel(sub);
-        lblS.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblS.setForeground(COLOR_TEXT_MUTED);
+        Label lblS = new Label(sub);
+        lblS.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
+        lblS.setTextFill(COLOR_TEXT_MUTED);
 
-        card.add(lblT);
-        card.add(Box.createVerticalStrut(8));
-        card.add(valLabel);
-        card.add(Box.createVerticalStrut(4));
-        card.add(lblS);
-
+        card.getChildren().addAll(lblT, valLabel, lblS);
         return card;
     }
 
     // =========================================================================
     // PANEL 6: RIWAYAT TRANSAKSI & RINCIAN BARANG TERJUAL (MASTER-DETAIL)
     // =========================================================================
-    private JPanel buatPanelRiwayat() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(FINTECH_CANVAS);
+    private Region buatPanelRiwayat() {
+        BorderPane panel = new BorderPane();
+        panel.setStyle("-fx-background-color: " + HEX_CANVAS + ";");
 
         // --- BAGIAN ATAS (MASTER): TABEL DAFTAR TRANSAKSI ---
-        JPanel pnlMaster = new JPanel(new BorderLayout(8, 8));
-        pnlMaster.setBackground(FINTECH_CARD);
-        pnlMaster.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(14, 16, 14, 16)));
+        VBox pnlMaster = new VBox(8);
+        styleFintechCard(pnlMaster, 14, 16);
 
-        JPanel topMaster = new JPanel(new BorderLayout());
-        topMaster.setBackground(FINTECH_CARD);
+        HBox topMaster = new HBox(10);
+        topMaster.setAlignment(Pos.CENTER_LEFT);
 
-        JLabel lblTitle = new JLabel("Riwayat Seluruh Transaksi Penjualan");
+        Label lblTitle = new Label("Riwayat Seluruh Transaksi Penjualan");
         lblTitle.setFont(FONT_TITLE);
-        lblTitle.setForeground(COLOR_TEXT_MAIN);
-        topMaster.add(lblTitle, BorderLayout.WEST);
+        lblTitle.setTextFill(COLOR_TEXT_MAIN);
 
-        ContrastButton btnRefresh = new ContrastButton("Refresh Riwayat", COLOR_SLATE_BTN, Color.WHITE);
-        topMaster.add(btnRefresh, BorderLayout.EAST);
-        pnlMaster.add(topMaster, BorderLayout.NORTH);
+        Region masterSpacer = new Region();
+        HBox.setHgrow(masterSpacer, Priority.ALWAYS);
 
-        DefaultTableModel modelTrx = new DefaultTableModel(new String[]{"ID", "No Faktur", "Kasir/Operator", "Subtotal", "Diskon", "PPN (10%)", "Total Tagihan", "Nominal Bayar", "Kembalian"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int col) { return false; }
-        };
-        JTable tblTrx = new JTable(modelTrx);
+        ContrastButton btnRefresh = new ContrastButton("Refresh Riwayat", HEX_SLATE_BTN, "#FFFFFF");
+        topMaster.getChildren().addAll(lblTitle, masterSpacer, btnRefresh);
+
+        ObservableList<Transaksi> trxList = FXCollections.observableArrayList();
+        TableView<Transaksi> tblTrx = new TableView<>(trxList);
         styleFintechTable(tblTrx);
-        pnlMaster.add(new JScrollPane(tblTrx), BorderLayout.CENTER);
+        VBox.setVgrow(tblTrx, Priority.ALWAYS);
+
+        TableColumn<Transaksi, Integer> colTrxId = new TableColumn<>("ID");
+        colTrxId.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getId()));
+        colTrxId.setPrefWidth(45);
+
+        TableColumn<Transaksi, String> colFaktur = new TableColumn<>("No Faktur");
+        colFaktur.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getNoFaktur()));
+        colFaktur.setPrefWidth(155);
+
+        TableColumn<Transaksi, String> colKasir = new TableColumn<>("Kasir/Operator");
+        colKasir.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getKasirNama()));
+        colKasir.setPrefWidth(150);
+
+        TableColumn<Transaksi, String> colSub = new TableColumn<>("Subtotal");
+        colSub.setCellValueFactory(c -> new ReadOnlyStringWrapper(formatRupiah(c.getValue().getSubtotal())));
+        colSub.setPrefWidth(105);
+
+        TableColumn<Transaksi, String> colDisc = new TableColumn<>("Diskon");
+        colDisc.setCellValueFactory(c -> new ReadOnlyStringWrapper(formatRupiah(c.getValue().getDiskon())));
+        colDisc.setPrefWidth(95);
+
+        TableColumn<Transaksi, String> colTax = new TableColumn<>("PPN (10%)");
+        colTax.setCellValueFactory(c -> new ReadOnlyStringWrapper(formatRupiah(c.getValue().getPajak())));
+        colTax.setPrefWidth(95);
+
+        TableColumn<Transaksi, String> colTot = new TableColumn<>("Total Tagihan");
+        colTot.setCellValueFactory(c -> new ReadOnlyStringWrapper(formatRupiah(c.getValue().getTotal())));
+        colTot.setPrefWidth(115);
+
+        TableColumn<Transaksi, String> colBayar = new TableColumn<>("Nominal Bayar");
+        colBayar.setCellValueFactory(c -> new ReadOnlyStringWrapper(formatRupiah(c.getValue().getBayar())));
+        colBayar.setPrefWidth(115);
+
+        TableColumn<Transaksi, String> colKembali = new TableColumn<>("Kembalian");
+        colKembali.setCellValueFactory(c -> new ReadOnlyStringWrapper(formatRupiah(c.getValue().getKembalian())));
+        colKembali.setPrefWidth(105);
+
+        tblTrx.getColumns().addAll(List.of(colTrxId, colFaktur, colKasir, colSub, colDisc, colTax, colTot, colBayar, colKembali));
+        pnlMaster.getChildren().addAll(topMaster, tblTrx);
 
         // --- BAGIAN BAWAH (DETAIL): TABEL RINCIAN BARANG TERJUAL ---
-        JPanel pnlDetail = new JPanel(new BorderLayout(8, 8));
-        pnlDetail.setBackground(FINTECH_CARD);
-        pnlDetail.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(14, 16, 14, 16)));
+        VBox pnlDetail = new VBox(8);
+        styleFintechCard(pnlDetail, 14, 16);
 
-        JPanel topDetail = new JPanel(new BorderLayout());
-        topDetail.setBackground(FINTECH_CARD);
+        HBox topDetail = new HBox(10);
+        topDetail.setAlignment(Pos.CENTER_LEFT);
 
-        JLabel lblDetailTitle = new JLabel("Rincian Barang Terjual (Pilih transaksi pada tabel di atas)");
+        Label lblDetailTitle = new Label("Rincian Barang Terjual (Pilih transaksi pada tabel di atas)");
         lblDetailTitle.setFont(FONT_TITLE);
-        lblDetailTitle.setForeground(COLOR_PRIMARY_DARK);
-        topDetail.add(lblDetailTitle, BorderLayout.WEST);
+        lblDetailTitle.setTextFill(COLOR_PRIMARY_DARK);
 
-        JPanel pnlDetailActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        pnlDetailActions.setBackground(FINTECH_CARD);
+        Region detailSpacer = new Region();
+        HBox.setHgrow(detailSpacer, Priority.ALWAYS);
 
-        ContrastButton btnBukaPDF = new ContrastButton("Buka Dokumen Struk (PDF)", COLOR_PRIMARY_DARK, Color.WHITE);
-        pnlDetailActions.add(btnBukaPDF);
-        topDetail.add(pnlDetailActions, BorderLayout.EAST);
-        pnlDetail.add(topDetail, BorderLayout.NORTH);
+        ContrastButton btnBukaPDF = new ContrastButton("Buka Dokumen Struk (PDF)", HEX_PRIMARY_DARK, "#FFFFFF");
+        topDetail.getChildren().addAll(lblDetailTitle, detailSpacer, btnBukaPDF);
 
-        DefaultTableModel modelItems = new DefaultTableModel(new String[]{"No", "Nama Menu / Minuman", "Harga Satuan", "Qty Terjual", "Subtotal"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int col) { return false; }
-        };
-        JTable tblItems = new JTable(modelItems);
+        ObservableList<String[]> itemRows = FXCollections.observableArrayList();
+        TableView<String[]> tblItems = new TableView<>(itemRows);
         styleFintechTable(tblItems);
-        pnlDetail.add(new JScrollPane(tblItems), BorderLayout.CENTER);
+        VBox.setVgrow(tblItems, Priority.ALWAYS);
 
-        // State Cache
+        TableColumn<String[], String> colNo = new TableColumn<>("No");
+        colNo.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue()[0]));
+        colNo.setPrefWidth(55);
+
+        TableColumn<String[], String> colItemNama = new TableColumn<>("Nama Menu / Minuman");
+        colItemNama.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue()[1]));
+        colItemNama.setPrefWidth(260);
+
+        TableColumn<String[], String> colItemHarga = new TableColumn<>("Harga Satuan");
+        colItemHarga.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue()[2]));
+        colItemHarga.setPrefWidth(140);
+
+        TableColumn<String[], String> colItemQty = new TableColumn<>("Qty Terjual");
+        colItemQty.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue()[3]));
+        colItemQty.setPrefWidth(130);
+
+        TableColumn<String[], String> colItemSub = new TableColumn<>("Subtotal");
+        colItemSub.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue()[4]));
+        colItemSub.setPrefWidth(150);
+
+        tblItems.getColumns().addAll(List.of(colNo, colItemNama, colItemHarga, colItemQty, colItemSub));
+        pnlDetail.getChildren().addAll(topDetail, tblItems);
+
         final List<Transaksi>[] cache = new List[]{new ArrayList<>()};
 
         Runnable loadTrx = () -> {
             try {
-                modelTrx.setRowCount(0);
-                modelItems.setRowCount(0);
+                itemRows.clear();
                 lblDetailTitle.setText("Rincian Barang Terjual (Pilih transaksi pada tabel di atas)");
                 cache[0] = transaksiService.getRiwayatTransaksi();
-                for (Transaksi t : cache[0]) {
-                    modelTrx.addRow(new Object[]{
-                            t.getId(), t.getNoFaktur(), t.getKasirNama(), formatRupiah(t.getSubtotal()),
-                            formatRupiah(t.getDiskon()), formatRupiah(t.getPajak()), formatRupiah(t.getTotal()),
-                            formatRupiah(t.getBayar()), formatRupiah(t.getKembalian())
-                    });
-                }
+                trxList.setAll(cache[0]);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(panel, "Gagal memuat riwayat: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                showAlert(Alert.AlertType.ERROR, "Error", "Gagal memuat riwayat: " + ex.getMessage());
             }
         };
+        this.refreshRiwayatHook = loadTrx;
         loadTrx.run();
 
-        // Event Klik Baris Transaksi -> Menampilkan Detail Barang Terjual!
-        tblTrx.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int sel = tblTrx.getSelectedRow();
-                if (sel >= 0 && sel < cache[0].size()) {
-                    Transaksi t = cache[0].get(sel);
-                    lblDetailTitle.setText("Rincian Barang Terjual - No Faktur: " + t.getNoFaktur() + " (Kasir: " + t.getKasirNama() + ")");
-                    modelItems.setRowCount(0);
+        // Event Klik Baris Transaksi -> Menampilkan Detail Barang Terjual
+        tblTrx.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, t) -> {
+            if (t != null) {
+                lblDetailTitle.setText("Rincian Barang Terjual - No Faktur: " + t.getNoFaktur() + " (Kasir: " + t.getKasirNama() + ")");
+                itemRows.clear();
 
-                    int no = 1;
-                    int totalQty = 0;
-                    for (DetailTransaksi dt : t.getItems()) {
-                        modelItems.addRow(new Object[]{
-                                no++, dt.getNamaMenu(), formatRupiah(dt.getHarga()),
-                                dt.getQty() + " cup/porsi", formatRupiah(dt.getSubtotal())
-                        });
-                        totalQty += dt.getQty();
-                    }
+                int no = 1;
+                for (DetailTransaksi dt : t.getItems()) {
+                    itemRows.add(new String[]{
+                            String.valueOf(no++),
+                            dt.getNamaMenu(),
+                            formatRupiah(dt.getHarga()),
+                            dt.getQty() + " cup/porsi",
+                            formatRupiah(dt.getSubtotal())
+                    });
+                }
 
-                    if (t.getItems().isEmpty()) {
-                        modelItems.addRow(new Object[]{"-", "(Tidak ada rincian item)", "-", "-", "-"});
-                    }
+                if (t.getItems().isEmpty()) {
+                    itemRows.add(new String[]{"-", "(Tidak ada rincian item)", "-", "-", "-"});
                 }
             }
         });
 
-        btnRefresh.addActionListener(e -> loadTrx.run());
+        btnRefresh.setOnAction(e -> loadTrx.run());
 
-        btnBukaPDF.addActionListener(e -> {
-            int sel = tblTrx.getSelectedRow();
-            if (sel < 0) {
-                JOptionPane.showMessageDialog(panel, "Pilih salah satu baris transaksi terlebih dahulu!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+        btnBukaPDF.setOnAction(e -> {
+            Transaksi sel = tblTrx.getSelectionModel().getSelectedItem();
+            if (sel == null) {
+                showAlert(Alert.AlertType.WARNING, "Peringatan", "Pilih salah satu baris transaksi terlebih dahulu!");
                 return;
             }
-            if (sel < cache[0].size()) {
-                Transaksi t = cache[0].get(sel);
-                File file = transaksiService.cetakStruk(t);
-                PDFUtil.bukaFile(file);
-            }
+            File file = transaksiService.cetakStruk(sel);
+            PDFUtil.bukaFile(file);
         });
 
         // Split Master-Detail Vertikal
-        JSplitPane splitRiwayat = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnlMaster, pnlDetail);
-        splitRiwayat.setResizeWeight(0.52);
-        splitRiwayat.setDividerSize(6);
-        splitRiwayat.setBackground(FINTECH_CANVAS);
+        SplitPane splitRiwayat = new SplitPane(pnlMaster, pnlDetail);
+        splitRiwayat.setOrientation(Orientation.VERTICAL);
+        splitRiwayat.setDividerPositions(0.52);
+        splitRiwayat.setStyle("-fx-background-color: " + HEX_CANVAS + "; -fx-box-border: transparent;");
 
-        panel.add(splitRiwayat, BorderLayout.CENTER);
+        panel.setCenter(splitRiwayat);
         return panel;
     }
 
     // =========================================================================
-    // HELPER STYLING UMUM
+    // HELPER DIALOG & STYLING UMUM (JAVAFX)
     // =========================================================================
-    public static void styleFintechTable(JTable table) {
-        table.setFont(FONT_REGULAR);
-        table.setRowHeight(32);
-        table.setGridColor(new Color(241, 245, 249));
-        table.setSelectionBackground(new Color(209, 250, 229));
-        table.setSelectionForeground(COLOR_TEXT_MAIN);
-        table.getTableHeader().setFont(FONT_BOLD);
-        table.getTableHeader().setBackground(new Color(241, 245, 249));
-        table.getTableHeader().setForeground(COLOR_TEXT_MAIN);
-        table.getTableHeader().setPreferredSize(new Dimension(0, 34));
-
-        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
-        center.setHorizontalAlignment(SwingConstants.CENTER);
+    private Stage createModalStage(String title, double width, double height) {
+        Stage dialog = new Stage();
+        dialog.initOwner(primaryStage);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle(title);
+        dialog.setWidth(width);
+        dialog.setHeight(height);
+        dialog.setResizable(false);
+        return dialog;
     }
 
-    public static JTextField createPillTextField(String text) {
-        JTextField tf = new JTextField(text);
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.initOwner(primaryStage);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private boolean showConfirm(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.initOwner(primaryStage);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        Optional<ButtonType> res = alert.showAndWait();
+        return res.isPresent() && res.get() == ButtonType.OK;
+    }
+
+    private Optional<String> showInputDialog(String title, String message, String defaultValue) {
+        TextInputDialog dialog = new TextInputDialog(defaultValue);
+        dialog.initOwner(primaryStage);
+        dialog.setTitle(title);
+        dialog.setHeaderText(null);
+        dialog.setContentText(message);
+        return dialog.showAndWait();
+    }
+
+    public static void styleFintechCard(Region pane, double padV, double padH) {
+        pane.setPadding(new Insets(padV, padH, padV, padH));
+        pane.setStyle(
+                "-fx-background-color: " + HEX_CARD + ";" +
+                        "-fx-border-color: " + HEX_BORDER + ";" +
+                        "-fx-border-width: 1;" +
+                        "-fx-border-radius: 14;" +
+                        "-fx-background-radius: 14;"
+        );
+    }
+
+    public static void styleFintechTable(TableView<?> table) {
+        table.setFixedCellSize(34);
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        table.setStyle(
+                "-fx-font-family: 'Segoe UI';" +
+                        "-fx-font-size: 13px;" +
+                        "-fx-background-color: white;" +
+                        "-fx-border-color: " + HEX_BORDER + ";" +
+                        "-fx-border-radius: 10;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-selection-bar: #D1FAE5;" +
+                        "-fx-selection-bar-non-focused: #D1FAE5;" +
+                        "-fx-selection-bar-text: " + HEX_TEXT_MAIN + ";"
+        );
+    }
+
+    public static TextField createPillTextField(String text) {
+        return createPillTextField(text, null, false);
+    }
+
+    public static TextField createPillTextField(String text, String placeholder, boolean showClear) {
+        TextField tf = new TextField(text);
         tf.setFont(FONT_REGULAR);
-        tf.setBorder(new CompoundBorder(new LineBorder(FINTECH_BORDER, 1, true), new EmptyBorder(5, 10, 5, 10)));
+        if (placeholder != null && !placeholder.isEmpty()) {
+            tf.setPromptText(placeholder);
+        }
+        applyFieldStyle(tf);
         return tf;
+    }
+
+    public static void applyFieldStyle(TextInputControl field) {
+        String normalStyle =
+                "-fx-background-color: white;" +
+                        "-fx-border-color: " + HEX_BORDER + ";" +
+                        "-fx-border-width: 1;" +
+                        "-fx-border-radius: 10;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-padding: 5 10 5 10;";
+
+        String focusedStyle =
+                "-fx-background-color: white;" +
+                        "-fx-border-color: " + HEX_SUCCESS + ";" +
+                        "-fx-border-width: 1.5;" +
+                        "-fx-border-radius: 10;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-padding: 5 10 5 10;";
+
+        field.setStyle(normalStyle);
+        field.focusedProperty().addListener((obs, wasFocused, isFocused) ->
+                field.setStyle(isFocused ? focusedStyle : normalStyle)
+        );
     }
 
     public static ContrastButton createFilterPill(String text, boolean active) {
         ContrastButton btn = new ContrastButton(
                 text,
-                active ? COLOR_PRIMARY_DARK : new Color(241, 245, 249),
-                active ? Color.WHITE : COLOR_TEXT_MAIN
+                active ? HEX_PRIMARY_DARK : HEX_CANVAS,
+                active ? "#FFFFFF" : HEX_TEXT_MAIN
         );
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btn.setBorder(new EmptyBorder(6, 12, 6, 12));
+        btn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+        btn.setPaddingCss("6 12 6 12");
         return btn;
     }
 }
