@@ -1450,15 +1450,24 @@ public class AdminDashboard extends Application {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         HBox pnlPills = new HBox(6);
+        pnlPills.setAlignment(Pos.CENTER_RIGHT); // [BARU] Agar sejajar rapi dengan tombol Refresh
+
         ContrastButton tabHarian = createFilterPill("Harian (Hari Ini)", true);
         ContrastButton tabMingguan = createFilterPill("Mingguan (Minggu Ini)", false);
         ContrastButton tabBulanan = createFilterPill("Bulanan (Bulan Ini)", false);
 
+     // [BARU] Tombol Refresh dengan pemisah visual
+        Separator sep = new Separator(Orientation.VERTICAL);
+        sep.setPadding(new Insets(2, 4, 2, 4));
+
+        ContrastButton btnRefresh = new ContrastButton("Refresh", HEX_SLATE_BTN, "#FFFFFF");
+        btnRefresh.setPaddingCss("6 12 6 12");
+
         ContrastButton[] periodBtns = {tabHarian, tabMingguan, tabBulanan};
         String[] periodKeys = {"Harian", "Mingguan", "Bulanan"};
-        pnlPills.getChildren().addAll(tabHarian, tabMingguan, tabBulanan);
+        pnlPills.getChildren().addAll(tabHarian, tabMingguan, tabBulanan, sep, btnRefresh);
         filterCard.getChildren().addAll(lblTitle, spacer, pnlPills);
-
+        
         // 3 KPI Cards
         HBox pnlKpis = new HBox(14);
 
@@ -1543,6 +1552,9 @@ public class AdminDashboard extends Application {
         };
         this.refreshLaporanHook = refreshLaporan;
 
+        // [BARU] Event handler tombol Refresh
+        btnRefresh.setOnAction(e -> refreshLaporan.run());
+
         for (int i = 0; i < periodBtns.length; i++) {
             final int idx = i;
             periodBtns[i].setOnAction(e -> {
@@ -1559,7 +1571,7 @@ public class AdminDashboard extends Application {
         panel.getChildren().addAll(filterCard, pnlKpis, pnlBestSellers);
         return panel;
     }
-
+ 
     private VBox buatKpiCard(String title, Label valLabel, String sub) {
         VBox card = new VBox(6);
         styleFintechCard(card, 16, 18);
