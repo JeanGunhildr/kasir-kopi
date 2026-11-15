@@ -657,12 +657,18 @@ public class AdminDashboard extends Application {
             try {
                 double bayar = Double.parseDouble(txtBayar.getText().trim());
                 double kembali = bayar - transaksi.getTotal();
-                lblKembalian.setText(kembali >= 0 ? formatRupiah(kembali) : "Kurang " + formatRupiah(Math.abs(kembali)));
+                if (kembali >= 0) {
+                    lblKembalian.setText(formatRupiah(kembali));
+                    lblKembalian.setTextFill(COLOR_SUCCESS);
+                } else {
+                    lblKembalian.setText("Kurang " + formatRupiah(Math.abs(kembali)));
+                    lblKembalian.setTextFill(COLOR_DANGER);
+                }
             } catch (Exception ex) {
                 lblKembalian.setText("Rp 0");
+                lblKembalian.setTextFill(COLOR_SUCCESS);
             }
         };
-
         txtBayar.textProperty().addListener((obs, oldVal, newVal) -> refreshCart.run());
 
         // Event Add Item

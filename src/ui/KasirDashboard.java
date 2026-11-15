@@ -542,6 +542,7 @@ public class KasirDashboard {
         // Logic Helper
         Runnable refreshCart = () -> {
             cartData.setAll(transaksi.getItems());
+            tblCart.refresh();
             transaksi.hitungTotal(appliedPromo[0]);
             lblSubtotalVal.setText(formatRupiah(transaksi.getSubtotal()));
             lblDiskonVal.setText("- " + formatRupiah(transaksi.getDiskon()));
@@ -551,9 +552,16 @@ public class KasirDashboard {
             try {
                 double bayar = Double.parseDouble(txtBayar.getText().trim());
                 double kembali = bayar - transaksi.getTotal();
-                lblKembalian.setText(kembali >= 0 ? formatRupiah(kembali) : "Kurang " + formatRupiah(Math.abs(kembali)));
+                if (kembali >= 0) {
+                    lblKembalian.setText(formatRupiah(kembali));
+                    lblKembalian.setTextFill(COLOR_SUCCESS);
+                } else {
+                    lblKembalian.setText("Kurang " + formatRupiah(Math.abs(kembali)));
+                    lblKembalian.setTextFill(COLOR_DANGER);
+                }
             } catch (Exception ex) {
                 lblKembalian.setText("Rp 0");
+                lblKembalian.setTextFill(COLOR_SUCCESS);
             }
         };
 
